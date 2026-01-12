@@ -25,6 +25,7 @@ import purchaseEntryRoutes from './purchase-entry.routes';
 import deliveryPartnerRoutes from './delivery-partner.routes';
 import pickupPartnerRoutes from './pickup-partner.routes';
 import priceListingRoutes from './price-listing.routes';
+import bookingRoutes from './booking.routes';
 
 const apiRouter = Router();
 
@@ -53,5 +54,6 @@ apiRouter.use('/purchase-entries', purchaseEntryRoutes);
 apiRouter.use('/delivery-partners', deliveryPartnerRoutes);
 apiRouter.use('/pickup-partners', pickupPartnerRoutes);
 apiRouter.use('/price-listings', priceListingRoutes);
+apiRouter.use('/bookings', bookingRoutes);
 
 export default apiRouter;

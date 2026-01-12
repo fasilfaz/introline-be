@@ -2,8 +2,8 @@ import { Schema, model, type Document, type Types } from 'mongoose';
 
 // Branch interface for receiver customers
 export interface Branch {
-  branchName: string;
-  location: string;
+  branchName?: string;
+  location?: string;
   phone?: string;
   contactPerson?: string;
 }
@@ -58,8 +58,8 @@ export interface CustomerDocument extends Document<Types.ObjectId> {
 
 // Branch schema
 const branchSchema = new Schema<Branch>({
-  branchName: { type: String, required: true, trim: true },
-  location: { type: String, required: true, trim: true },
+  branchName: { type: String, trim: true },
+  location: { type: String, trim: true },
   phone: { type: String, trim: true },
   contactPerson: { type: String, trim: true }
 }, { _id: false });
