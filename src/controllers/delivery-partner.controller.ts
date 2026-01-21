@@ -9,7 +9,7 @@ import { getPaginationParams } from '../utils/pagination';
 import { buildPaginationMeta } from '../utils/query-builder';
 
 export const listDeliveryPartners = asyncHandler(async (req: Request, res: Response) => {
-  const { status, search, country } = req.query;
+  const { status, search, fromCountry, toCountry } = req.query;
   const { page, limit, sortBy, sortOrder } = getPaginationParams(req);
 
   const filters: Record<string, unknown> = {};
@@ -18,15 +18,20 @@ export const listDeliveryPartners = asyncHandler(async (req: Request, res: Respo
     filters.status = status;
   }
 
-  if (country && country !== 'all') {
-    filters.country = country;
+  if (fromCountry && fromCountry !== 'all') {
+    filters.fromCountry = fromCountry;
+  }
+
+  if (toCountry && toCountry !== 'all') {
+    filters.toCountry = toCountry;
   }
 
   if (search && typeof search === 'string') {
     filters.$or = [
       { name: new RegExp(search, 'i') },
       { phoneNumber: new RegExp(search, 'i') },
-      { country: new RegExp(search, 'i') }
+      { fromCountry: new RegExp(search, 'i') },
+      { toCountry: new RegExp(search, 'i') }
     ];
   }
 
@@ -56,18 +61,19 @@ export const getDeliveryPartner = asyncHandler(async (req: Request, res: Respons
 });
 
 export const createDeliveryPartner = asyncHandler(async (req: Request, res: Response) => {
-  const { name, phoneNumber, price, country, status } = req.body;
+  const { name, phoneNumber, price, fromCountry, toCountry, status } = req.body;
 
   // Validate required fields
-  if (!name || !phoneNumber || price === undefined || !country) {
-    throw ApiError.badRequest('Name, phone number, price, and country are required');
+  if (!name || !phoneNumber || price === undefined || !fromCountry || !toCountry) {
+    throw ApiError.badRequest('Name, phone number, price, from country, and to country are required');
   }
 
   const deliveryPartnerData = {
     name: name.trim(),
     phoneNumber: phoneNumber.trim(),
     price: Number(price),
-    country: country.trim(),
+    fromCountry: fromCountry.trim(),
+    toCountry: toCountry.trim(),
     status: status || 'Active'
   };
 
@@ -92,12 +98,13 @@ export const updateDeliveryPartner = asyncHandler(async (req: Request, res: Resp
   }
 
   const updates: Record<string, unknown> = {};
-  const { name, phoneNumber, price, country, status } = req.body;
+  const { name, phoneNumber, price, fromCountry, toCountry, status } = req.body;
 
   if (name !== undefined) updates.name = name;
   if (phoneNumber !== undefined) updates.phoneNumber = phoneNumber;
   if (price !== undefined) updates.price = price;
-  if (country !== undefined) updates.country = country;
+  if (fromCountry !== undefined) updates.fromCountry = fromCountry;
+  if (toCountry !== undefined) updates.toCountry = toCountry;
   if (status !== undefined) updates.status = status;
 
   Object.assign(deliveryPartner, updates);

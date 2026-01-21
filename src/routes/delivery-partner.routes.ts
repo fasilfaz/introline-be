@@ -19,7 +19,8 @@ router.post(
     body('name').notEmpty().withMessage('Name is required'),
     body('phoneNumber').notEmpty().withMessage('Phone number is required'),
     body('price').isNumeric().withMessage('Price must be a number'),
-    body('country').notEmpty().withMessage('Country is required'),
+    body('fromCountry').notEmpty().withMessage('From country is required'),
+    body('toCountry').notEmpty().withMessage('To country is required'),
     body('status').optional().isIn(['Active', 'Inactive']).withMessage('Status must be Active or Inactive')
   ],
   validateRequest,
