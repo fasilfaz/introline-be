@@ -26,6 +26,7 @@ import deliveryPartnerRoutes from './delivery-partner.routes';
 import pickupPartnerRoutes from './pickup-partner.routes';
 import priceListingRoutes from './price-listing.routes';
 import bookingRoutes from './booking.routes';
+import reminderRoutes from './reminder.routes';
 
 const apiRouter = Router();
 
@@ -55,5 +56,6 @@ apiRouter.use('/delivery-partners', deliveryPartnerRoutes);
 apiRouter.use('/pickup-partners', pickupPartnerRoutes);
 apiRouter.use('/price-listings', priceListingRoutes);
 apiRouter.use('/bookings', bookingRoutes);
+apiRouter.use('/reminders', reminderRoutes);
 
 export default apiRouter;
