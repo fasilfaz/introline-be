@@ -36,16 +36,17 @@ export interface CustomerDocument extends Document<Types.ObjectId> {
   // Common fields
   shopName?: string;
   contactPerson?: string;
+  phone?: string;
+  whatsappNumber?: string;
+  countryCode?: string;
   
   // Sender specific fields
   location?: string;
   gstNumber?: string;
-  whatsappNumber?: string;
   accountDetails?: AccountDetails;
   
   // Receiver specific fields
   branches?: Branch[];
-  phone?: string;
   credit?: number;
   country?: string;
   address?: string;
@@ -93,16 +94,17 @@ const customerSchema = new Schema<CustomerDocument>(
     // Common fields
     shopName: { type: String, trim: true },
     contactPerson: { type: String, trim: true },
+    phone: { type: String, trim: true },
+    whatsappNumber: { type: String, trim: true },
+    countryCode: { type: String, trim: true, default: '+91' },
     
     // Sender specific fields
     location: { type: String, trim: true },
     gstNumber: { type: String, trim: true },
-    whatsappNumber: { type: String, trim: true },
     accountDetails: accountDetailsSchema,
     
     // Receiver specific fields
     branches: [branchSchema],
-    phone: { type: String, trim: true },
     credit: { type: Number, default: 0 },
     country: { type: String, trim: true },
     address: { type: String, trim: true },
