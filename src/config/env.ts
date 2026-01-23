@@ -25,6 +25,11 @@ export const config = {
   },
   password: {
     saltRounds: Number(process.env.PASSWORD_SALT_ROUNDS || 10)
+  },
+  twilio: {
+    accountSid: process.env.TWILIO_ACCOUNT_SID,
+    authToken: process.env.TWILIO_AUTH_TOKEN,
+    whatsappNumber: process.env.TWILIO_WHATSAPP_NUMBER || 'whatsapp:+14155238886' // Twilio Sandbox number
   }
 } as const;
 

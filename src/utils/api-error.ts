@@ -33,6 +33,10 @@ export class ApiError extends Error {
   static conflict(message?: string, details?: unknown): ApiError {
     return new ApiError(StatusCodes.CONFLICT, message, { details });
   }
+
+  static internal(message?: string, details?: unknown): ApiError {
+    return new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, message, { details });
+  }
 }
 
 const safeReasonPhrase = (statusCode: number): string | undefined => {
