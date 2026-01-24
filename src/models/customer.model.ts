@@ -36,9 +36,8 @@ export interface CustomerDocument extends Document<Types.ObjectId> {
   // Common fields
   shopName?: string;
   contactPerson?: string;
-  phone?: string;
-  whatsappNumber?: string;
-  countryCode?: string;
+  phone?: string; // Now stores complete phone number with country code
+  whatsappNumber?: string; // Now stores complete WhatsApp number with country code
   
   // Sender specific fields
   location?: string;
@@ -94,9 +93,8 @@ const customerSchema = new Schema<CustomerDocument>(
     // Common fields
     shopName: { type: String, trim: true },
     contactPerson: { type: String, trim: true },
-    phone: { type: String, trim: true },
-    whatsappNumber: { type: String, trim: true },
-    countryCode: { type: String, trim: true, default: '+91' },
+    phone: { type: String, trim: true }, // Now stores complete phone number with country code
+    whatsappNumber: { type: String, trim: true }, // Now stores complete WhatsApp number with country code
     
     // Sender specific fields
     location: { type: String, trim: true },

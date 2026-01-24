@@ -91,16 +91,17 @@ export const createCustomer = asyncHandler(async (req: Request, res: Response) =
     customerType,
     name, 
     status,
+    // Common fields
+    shopName,
+    contactPerson,
+    phone,
+    whatsappNumber,
     // Sender specific fields
     location,
     gstNumber,
-    whatsappNumber,
-    shopName,
-    contactPerson,
     accountDetails,
     // Receiver specific fields
     branches,
-    phone,
     credit,
     country,
     address,
@@ -123,13 +124,16 @@ export const createCustomer = asyncHandler(async (req: Request, res: Response) =
     status: status || 'Active'
   };
 
+  // Add common fields
+  if (shopName && shopName.trim()) customerData.shopName = shopName.trim();
+  if (contactPerson && contactPerson.trim()) customerData.contactPerson = contactPerson.trim();
+  if (phone && phone.trim()) customerData.phone = phone.trim();
+  if (whatsappNumber && whatsappNumber.trim()) customerData.whatsappNumber = whatsappNumber.trim();
+
   // Add sender specific fields if customer type is Sender
   if (customerType === 'Sender') {
     if (location && location.trim()) customerData.location = location.trim();
     if (gstNumber && gstNumber.trim()) customerData.gstNumber = gstNumber.trim();
-    if (whatsappNumber && whatsappNumber.trim()) customerData.whatsappNumber = whatsappNumber.trim();
-    if (shopName && shopName.trim()) customerData.shopName = shopName.trim();
-    if (contactPerson && contactPerson.trim()) customerData.contactPerson = contactPerson.trim();
     if (accountDetails && typeof accountDetails === 'object') {
       customerData.accountDetails = accountDetails;
     }
@@ -138,14 +142,11 @@ export const createCustomer = asyncHandler(async (req: Request, res: Response) =
   // Add receiver specific fields if customer type is Receiver
   if (customerType === 'Receiver') {
     if (branches && Array.isArray(branches)) customerData.branches = branches;
-    if (phone && phone.trim()) customerData.phone = phone.trim();
     if (credit !== undefined && credit !== null) customerData.credit = Number(credit);
     if (country && country.trim()) customerData.country = country.trim();
     if (address && address.trim()) customerData.address = address.trim();
     if (discount !== undefined && discount !== null) customerData.discount = Number(discount);
     if (paymentHistory && Array.isArray(paymentHistory)) customerData.paymentHistory = paymentHistory;
-    if (shopName && shopName.trim()) customerData.shopName = shopName.trim();
-    if (contactPerson && contactPerson.trim()) customerData.contactPerson = contactPerson.trim();
   }
 
   try {
@@ -173,16 +174,17 @@ export const updateCustomer = asyncHandler(async (req: Request, res: Response) =
     customerType,
     name, 
     status,
+    // Common fields
+    shopName,
+    contactPerson,
+    phone,
+    whatsappNumber,
     // Sender specific fields
     location,
     gstNumber,
-    whatsappNumber,
-    shopName,
-    contactPerson,
     accountDetails,
     // Receiver specific fields
     branches,
-    phone,
     credit,
     country,
     address,
@@ -194,18 +196,18 @@ export const updateCustomer = asyncHandler(async (req: Request, res: Response) =
   if (customerType !== undefined) updates.customerType = customerType;
   if (name !== undefined) updates.name = name;
   if (status !== undefined) updates.status = status;
+  if (shopName !== undefined) updates.shopName = shopName;
+  if (contactPerson !== undefined) updates.contactPerson = contactPerson;
+  if (phone !== undefined) updates.phone = phone;
+  if (whatsappNumber !== undefined) updates.whatsappNumber = whatsappNumber;
 
   // Sender specific fields
   if (location !== undefined) updates.location = location;
   if (gstNumber !== undefined) updates.gstNumber = gstNumber;
-  if (whatsappNumber !== undefined) updates.whatsappNumber = whatsappNumber;
-  if (shopName !== undefined) updates.shopName = shopName;
-  if (contactPerson !== undefined) updates.contactPerson = contactPerson;
   if (accountDetails !== undefined) updates.accountDetails = accountDetails;
 
   // Receiver specific fields
   if (branches !== undefined) updates.branches = branches;
-  if (phone !== undefined) updates.phone = phone;
   if (credit !== undefined) updates.credit = credit;
   if (country !== undefined) updates.country = country;
   if (address !== undefined) updates.address = address;
