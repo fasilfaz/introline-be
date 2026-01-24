@@ -75,7 +75,6 @@ containerSchema.pre('findOneAndUpdate', function(next) {
 });
 
 // Create indexes for better performance
-containerSchema.index({ containerCode: 1 });
 containerSchema.index({ companyName: 1 });
 containerSchema.index({ status: 1 });
 containerSchema.index({ bookingDate: -1 });
