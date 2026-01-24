@@ -9,8 +9,13 @@ import { verifyAccessToken } from '../services/token.service';
 const ROLE_PERMISSION_FALLBACK: Record<string, string[]> = {
   superadmin: ['*'],
   admin: ['*'],
-  purchaser: ['manage_purchases', 'manage_inventory', 'manage_packing', 'manage_qc', 'manage_suppliers', 'manage_expenses'],
-  biller: ['manage_sales', 'manage_inventory', 'manage_expenses', 'manage_suppliers']
+  manager: ['manage_inventory', 'manage_sales', 'manage_customers', 'manage_bookings', 'manage_containers', 'manage_reminders'],
+  store_keeper: ['manage_inventory', 'view_sales'],
+  marketing_executive: ['manage_customers', 'manage_bookings', 'view_sales'],
+  pickup_boy: ['view_bookings', 'update_pickup_status'],
+  telecaller: ['manage_customers', 'manage_bookings', 'manage_reminders'],
+  logistic_coordinator: ['manage_bookings', 'manage_containers', 'manage_delivery_partners', 'manage_pickup_partners'],
+  customer: ['view_own_bookings', 'create_bookings']
 };
 
 const parseAuthHeader = (authorization?: string): string | null => {
@@ -46,14 +51,14 @@ export const authenticate = asyncHandler(async (req: Request, _res: Response, ne
     const userRole = user.role;
     const resolvedPermissions = ROLE_PERMISSION_FALLBACK[userRole] || [];
 
-    // Debug logging for biller role
-    if (userRole === 'biller') {
+    // Debug logging for customer role
+    if (userRole === 'customer') {
       logger.info({
         userId: user._id.toString(),
         userRole,
         resolvedPermissions,
         fallbackPermissions: ROLE_PERMISSION_FALLBACK[userRole]
-      }, 'Biller authentication debug');
+      }, 'Customer authentication debug');
     }
 
     req.user = {

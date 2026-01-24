@@ -24,7 +24,7 @@ router.post(
     body('role')
       .isString()
       .trim()
-      .isIn(['superadmin', 'admin', 'purchaser', 'biller'])
+      .isIn(['superadmin', 'admin', 'manager', 'store_keeper', 'marketing_executive', 'pickup_boy', 'telecaller', 'customer', 'logistic_coordinator'])
   ],
   validateRequest,
   createUser
@@ -40,7 +40,7 @@ router.put(
       .optional()
       .isString()
       .trim()
-      .isIn(['superadmin', 'admin', 'purchaser', 'biller'])
+      .isIn(['superadmin', 'admin', 'manager', 'store_keeper', 'marketing_executive', 'pickup_boy', 'telecaller', 'customer', 'logistic_coordinator'])
   ],
   validateRequest,
   updateUser

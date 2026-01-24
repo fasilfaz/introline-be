@@ -11,8 +11,8 @@ import { config } from '../config/env';
 import { getPaginationParams } from '../utils/pagination';
 import { buildPaginationMeta } from '../utils/query-builder';
 
-type ValidRole = 'superadmin' | 'admin' | 'purchaser' | 'biller';
-const VALID_ROLES: ValidRole[] = ['superadmin', 'admin', 'purchaser', 'biller'];
+type ValidRole = 'superadmin' | 'admin' | 'manager' | 'store_keeper' | 'marketing_executive' | 'pickup_boy' | 'telecaller' | 'customer' | 'logistic_coordinator';
+const VALID_ROLES: ValidRole[] = ['superadmin', 'admin', 'manager', 'store_keeper', 'marketing_executive', 'pickup_boy', 'telecaller', 'customer', 'logistic_coordinator'];
 
 const sanitizeUser = (user: UserDocument) => ({
   id: user._id.toString(),
