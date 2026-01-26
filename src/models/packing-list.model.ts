@@ -1,83 +1,124 @@
 import { Schema, model, type Document, type Types } from 'mongoose';
 
-export interface PackingListItem {
-  product: Types.ObjectId;
-  quantity: number;
-  description?: string;
-  unitOfMeasure?: string;
-}
-
 export interface PackingListDocument extends Document<Types.ObjectId> {
-  company?: Types.ObjectId;
-  boxNumber: string;
-  items: PackingListItem[];
-  totalQuantity: number;
-  image1?: string;
-  image2?: string;
-  shipmentDate?: Date;
-  packingDate?: Date;
-  store?: Types.ObjectId;
-  toStore?: Types.ObjectId;
-  currency?: 'INR' | 'AED';
-  exchangeRate?: number;
-  status: 'pending' | 'in_transit' | 'approved' | 'shipped' | 'rejected' | 'india' | 'uae';
-  approvalStatus: 'draft' | 'approved'; // New approval workflow field
-  createdBy: Types.ObjectId;
-  approvedBy?: Types.ObjectId;
-  approvedAt?: Date;
-  // New fields
-  cargoNumber?: string;
-  fabricDetails?: string;
+  bookingReference: Types.ObjectId; // Reference to Booking
+  packingListCode: string; // Auto-generated unique code
+  netWeight: number; // Total net weight of packed items
+  grossWeight: number; // Total gross weight including packaging
+  packedBy: string; // Name of person who completed packing
+  plannedBundleCount: number; // Number of bundles planned for packing
+  actualBundleCount: number; // Number of bundles packed after completion
+  packingStatus: 'pending' | 'in_progress' | 'completed'; // Current status of packing process
+  company?: Types.ObjectId; // For legacy index compatibility
+  boxNumber?: string; // For legacy index compatibility
+  count?: number; // New sequential count
   createdAt: Date;
   updatedAt: Date;
-  size?: string;
-  description? :string;
 }
-
-const packingListItemSchema = new Schema<PackingListItem>(
-  {
-    product: { type: Schema.Types.ObjectId, ref: 'Item', required: true },
-    quantity: { type: Number, required: true, min: 0 },
-    description: { type: String, trim: true },
-    unitOfMeasure: { type: String, trim: true }
-  },
-  { _id: false }
-);
 
 const packingListSchema = new Schema<PackingListDocument>(
   {
-    company: { type: Schema.Types.ObjectId, ref: 'Company', index: true },
-    boxNumber: { type: String, required: true, trim: true },
-    items: { type: [packingListItemSchema], default: [] },
-    totalQuantity: { type: Number, default: 0, min: 0 },
-    image1: { type: String },
-    image2: { type: String },
-    shipmentDate: { type: Date },
-    packingDate: { type: Date },
-    store: { type: Schema.Types.ObjectId, ref: 'Store' },
-    toStore: { type: Schema.Types.ObjectId, ref: 'Store' },
-    currency: { type: String, enum: ['INR', 'AED'], default: 'INR' },
-    exchangeRate: { type: Number },
-    status: { type: String, enum: ['pending', 'in_transit', 'approved', 'shipped', 'rejected', 'india', 'uae'], default: 'india' },
-    approvalStatus: { type: String, enum: ['draft', 'approved'], default: 'draft' }, // New approval workflow field
-    createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    approvedBy: { type: Schema.Types.ObjectId, ref: 'User' },
-    approvedAt: { type: Date },
-    // New fields
-    cargoNumber: { type: String, trim: true },
-    fabricDetails: { type: String, trim: true },
-    size: { type: String, trim: true },
-    description: { type: String, trim: true }
+    bookingReference: {
+      type: Schema.Types.ObjectId,
+      ref: 'Booking',
+      required: true,
+      index: true
+    },
+    packingListCode: {
+      type: String,
+      unique: true,
+      trim: true
+    },
+    netWeight: {
+      type: Number,
+      required: true,
+      min: 0
+    },
+    grossWeight: {
+      type: Number,
+      required: true,
+      min: 0
+    },
+    packedBy: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    plannedBundleCount: {
+      type: Number,
+      required: true,
+      min: 0
+    },
+    actualBundleCount: {
+      type: Number,
+      required: true,
+      min: 0,
+      default: 0
+    },
+    packingStatus: {
+      type: String,
+      enum: ['pending', 'in_progress', 'completed'],
+      default: 'pending'
+    },
+    company: {
+      type: Schema.Types.ObjectId,
+      default: null,
+      index: true
+    },
+    boxNumber: {
+      type: String,
+      default: null,
+      index: true
+    },
+    count: {
+      type: Number,
+      default: 0
+    }
   },
   {
     timestamps: true
   }
 );
 
-// packingListSchema.index({ boxNumber: 1 }, { unique: true });
+// Create indexes for better performance
+packingListSchema.index({ packingListCode: 1 }, { unique: true });
+packingListSchema.index({ bookingReference: 1 });
+packingListSchema.index({ packingStatus: 1 });
+packingListSchema.index({ createdAt: -1 });
 
-packingListSchema.pre('save', function (next) {
-  this.totalQuantity = this.items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+// Pre-save middleware to auto-generate packing list code
+packingListSchema.pre('save', async function (next) {
+  if (this.isNew) {
+    try {
+      const year = new Date().getFullYear();
+      const PackingListModel = this.constructor as any;
+
+      // 1. Generate Global Sequential Count
+      if (!this.count) {
+        const lastRecord = await PackingListModel.findOne().sort({ count: -1 });
+        this.count = (lastRecord?.count || 0) + 1;
+      }
+
+      // 2. Generate packingListCode (e.g., PL-2024-001) if not provided
+      if (!this.packingListCode) {
+        const yearCount = await PackingListModel.countDocuments({
+          packingListCode: new RegExp(`^PL-${year}-`)
+        });
+        this.packingListCode = `PL-${year}-${String(yearCount + 1).padStart(3, '0')}`;
+      }
+
+      // 3. Set boxNumber to packingListCode to satisfy legacy unique index { company: 1, boxNumber: 1 }
+      // Since company is null/undefined for new records, boxNumber MUST be unique.
+      if (!this.boxNumber) {
+        this.boxNumber = this.packingListCode;
+      }
+
+      console.log('Generated packing list - Code:', this.packingListCode, 'Count:', this.count, 'BoxNumber:', this.boxNumber);
+    } catch (error) {
+      console.error('Error in packing list pre-save middleware:', error);
+      return next(error as Error);
+    }
+  }
   next();
 });
 

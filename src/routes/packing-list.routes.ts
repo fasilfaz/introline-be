@@ -3,7 +3,7 @@ import { body, param } from 'express-validator';
 
 import { authenticate, authorize } from '../middlewares/auth';
 import { validateRequest } from '../middlewares/validate-request';
-import { listPackingLists, createPackingList, getPackingList, updatePackingList, deletePackingList, approvePackingList } from '../controllers/packing-list.controller';
+import { listPackingLists, createPackingList, getPackingList, updatePackingList, deletePackingList } from '../controllers/packing-list.controller';
 
 const router = Router();
 
@@ -14,10 +14,13 @@ router.get('/', listPackingLists);
 router.post(
   '/',
   [
-    body('boxNumber').notEmpty(),
-    body('items').isArray({ min: 1 }),
-    body('items.*.productId').isMongoId(),
-    body('items.*.quantity').isNumeric()
+    body('bookingReference').isMongoId().withMessage('Valid booking reference is required'),
+    body('netWeight').isNumeric({ min: 0 }).withMessage('Net weight must be a positive number'),
+    body('grossWeight').isNumeric({ min: 0 }).withMessage('Gross weight must be a positive number'),
+    body('packedBy').notEmpty().trim().withMessage('Packed by is required'),
+    body('plannedBundleCount').isInt({ min: 0 }).withMessage('Planned bundle count must be a positive integer'),
+    body('actualBundleCount').optional().isInt({ min: 0 }).withMessage('Actual bundle count must be a positive integer'),
+    body('packingStatus').optional().isIn(['pending', 'in_progress', 'completed']).withMessage('Invalid packing status')
   ],
   validateRequest,
   createPackingList
@@ -27,16 +30,18 @@ router.get('/:id', [param('id').isMongoId()], validateRequest, getPackingList);
 
 router.put(
   '/:id',
-  [param('id').isMongoId(), body('items').optional().isArray(), body('items.*.productId').optional().isMongoId()],
+  [
+    param('id').isMongoId(),
+    body('bookingReference').optional().isMongoId().withMessage('Valid booking reference is required'),
+    body('netWeight').optional().isNumeric({ min: 0 }).withMessage('Net weight must be a positive number'),
+    body('grossWeight').optional().isNumeric({ min: 0 }).withMessage('Gross weight must be a positive number'),
+    body('packedBy').optional().notEmpty().trim().withMessage('Packed by is required'),
+    body('plannedBundleCount').optional().isInt({ min: 0 }).withMessage('Planned bundle count must be a positive integer'),
+    body('actualBundleCount').optional().isInt({ min: 0 }).withMessage('Actual bundle count must be a positive integer'),
+    body('packingStatus').optional().isIn(['pending', 'in_progress', 'completed']).withMessage('Invalid packing status')
+  ],
   validateRequest,
   updatePackingList
-);
-
-router.post(
-  '/:id/approve',
-  [param('id').isMongoId()],
-  validateRequest,
-  approvePackingList
 );
 
 router.delete('/:id', [param('id').isMongoId()], validateRequest, deletePackingList);
