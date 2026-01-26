@@ -2,12 +2,12 @@ import mongoose from 'mongoose';
 import { Booking } from '../models/booking.model';
 import { Customer } from '../models/customer.model';
 import { Store } from '../models/store.model';
-import { connectDB } from '../config/database';
+import { connectDatabase } from '../config/database';
 
 // Script to associate bookings with stores based on customer country information
 const associateBookingsWithStores = async () => {
   try {
-    await connectDB();
+    await connectDatabase();
 
     console.log('Starting booking-store association...');
 

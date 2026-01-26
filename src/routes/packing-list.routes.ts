@@ -15,8 +15,8 @@ router.post(
   '/',
   [
     body('bookingReference').isMongoId().withMessage('Valid booking reference is required'),
-    body('netWeight').isNumeric({ min: 0 }).withMessage('Net weight must be a positive number'),
-    body('grossWeight').isNumeric({ min: 0 }).withMessage('Gross weight must be a positive number'),
+    body('netWeight').isFloat({ min: 0 }).withMessage('Net weight must be a positive number'),
+    body('grossWeight').isFloat({ min: 0 }).withMessage('Gross weight must be a positive number'),
     body('packedBy').notEmpty().trim().withMessage('Packed by is required'),
     body('plannedBundleCount').isInt({ min: 0 }).withMessage('Planned bundle count must be a positive integer'),
     body('actualBundleCount').optional().isInt({ min: 0 }).withMessage('Actual bundle count must be a positive integer'),
@@ -33,8 +33,8 @@ router.put(
   [
     param('id').isMongoId(),
     body('bookingReference').optional().isMongoId().withMessage('Valid booking reference is required'),
-    body('netWeight').optional().isNumeric({ min: 0 }).withMessage('Net weight must be a positive number'),
-    body('grossWeight').optional().isNumeric({ min: 0 }).withMessage('Gross weight must be a positive number'),
+    body('netWeight').optional().isFloat({ min: 0 }).withMessage('Net weight must be a positive number'),
+    body('grossWeight').optional().isFloat({ min: 0 }).withMessage('Gross weight must be a positive number'),
     body('packedBy').optional().notEmpty().trim().withMessage('Packed by is required'),
     body('plannedBundleCount').optional().isInt({ min: 0 }).withMessage('Planned bundle count must be a positive integer'),
     body('actualBundleCount').optional().isInt({ min: 0 }).withMessage('Actual bundle count must be a positive integer'),
