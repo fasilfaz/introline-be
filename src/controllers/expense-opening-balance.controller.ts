@@ -26,8 +26,8 @@ export const listOpeningBalances = asyncHandler(async (req: Request, res: Respon
 
   // Build query filters based on user role
   const filters: Record<string, unknown> = {};
-  if (user.role === 'purchaser' || user.role === 'biller') {
-    // Purchasers and billers can only see their own created opening balances
+  if (user.role === 'manager' || user.role === 'store_keeper' || user.role === 'marketing_executive' || user.role === 'pickup_boy' || user.role === 'telecaller' || user.role === 'logistic_coordinator') {
+    // Role-based users can only see their own created opening balances
     filters.createdBy = req.user.id;
   }
   // superadmin and admin can see all opening balances (no additional filter needed)
@@ -46,9 +46,6 @@ export const listOpeningBalances = asyncHandler(async (req: Request, res: Respon
 
   // Calculate total expenses for each balance (filtered by user if needed)
   const expenseFilters: Record<string, unknown> = {};
-  if (user.role === 'purchaser' || user.role === 'biller') {
-    expenseFilters.createdBy = new Types.ObjectId(req.user.id);
-  }
 
   const totalExpenses = await DailyExpense.aggregate([
     { $match: expenseFilters },
@@ -96,8 +93,8 @@ export const getOpeningBalance = asyncHandler(async (req: Request, res: Response
 
   // Build query filters based on user role
   const filters: Record<string, unknown> = {};
-  if (user.role === 'purchaser' || user.role === 'biller') {
-    // Purchasers and billers can only see their own created opening balances
+  if (user.role === 'manager' || user.role === 'store_keeper' || user.role === 'marketing_executive' || user.role === 'pickup_boy' || user.role === 'telecaller' || user.role === 'logistic_coordinator') {
+    // Role-based users can only see their own created opening balances
     filters.createdBy = req.user.id;
   }
 
@@ -119,7 +116,7 @@ export const getOpeningBalance = asyncHandler(async (req: Request, res: Response
 
   // Calculate total expenses (filtered by user if needed)
   const expenseFilters: Record<string, unknown> = {};
-  if (user.role === 'purchaser' || user.role === 'biller') {
+  if (user.role === 'manager' || user.role === 'store_keeper' || user.role === 'marketing_executive' || user.role === 'pickup_boy' || user.role === 'telecaller' || user.role === 'logistic_coordinator') {
     expenseFilters.createdBy = new Types.ObjectId(req.user.id);
   }
 
@@ -174,9 +171,6 @@ export const createOpeningBalance = asyncHandler(async (req: Request, res: Respo
   }
 
   const expenseFilters: Record<string, unknown> = {};
-  if (user.role === 'purchaser' || user.role === 'biller') {
-    expenseFilters.createdBy = new Types.ObjectId(req.user.id);
-  }
 
   const totalExpenses = await DailyExpense.aggregate([
     { $match: expenseFilters },
@@ -230,8 +224,8 @@ export const updateOpeningBalance = asyncHandler(async (req: Request, res: Respo
 
   // Build query filters based on user role
   const filters: Record<string, unknown> = { _id: id };
-  if (user.role === 'purchaser' || user.role === 'biller') {
-    // Purchasers and billers can only update their own created opening balances
+  if (user.role === 'manager' || user.role === 'store_keeper' || user.role === 'marketing_executive' || user.role === 'pickup_boy' || user.role === 'telecaller' || user.role === 'logistic_coordinator') {
+    // Role-based users can only update their own created opening balances
     filters.createdBy = req.user.id;
   }
 
@@ -248,7 +242,7 @@ export const updateOpeningBalance = asyncHandler(async (req: Request, res: Respo
 
   // Calculate total expenses and remaining balance (filtered by user if needed)
   const expenseFilters: Record<string, unknown> = {};
-  if (user.role === 'purchaser' || user.role === 'biller') {
+  if (user.role === 'manager' || user.role === 'store_keeper' || user.role === 'marketing_executive' || user.role === 'pickup_boy' || user.role === 'telecaller' || user.role === 'logistic_coordinator') {
     expenseFilters.createdBy = new Types.ObjectId(req.user.id);
   }
 
@@ -303,8 +297,8 @@ export const deleteOpeningBalance = asyncHandler(async (req: Request, res: Respo
 
   // Build query filters based on user role
   const filters: Record<string, unknown> = { _id: id };
-  if (user.role === 'purchaser' || user.role === 'biller') {
-    // Purchasers and billers can only delete their own created opening balances
+  if (user.role === 'manager' || user.role === 'store_keeper' || user.role === 'marketing_executive' || user.role === 'pickup_boy' || user.role === 'telecaller' || user.role === 'logistic_coordinator') {
+    // Role-based users can only delete their own created opening balances
     filters.createdBy = req.user.id;
   }
 

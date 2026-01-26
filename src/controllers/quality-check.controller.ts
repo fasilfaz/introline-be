@@ -95,29 +95,31 @@ export const submitQualityCheck = asyncHandler(async (req: Request, res: Respons
     try {
       console.log(`[QC Approval] Processing store stock update for product: ${product._id} (${product.name})`);
 
-      // Find all stores with purchaser role
-      // Robust query: Look for stores with purchaser role assigned OR strictly manage role if specifically needed
-      // First try strict purchaser role
-      let purchaserStores = await Store.find({
-        purchaser: 'ROLE_PURCHASER',
+      // Find all stores with manager or store_keeper role (the new roles that can handle inventory)
+      // Robust query: Look for stores with manager or store_keeper role assigned
+      let targetStores = await Store.find({
+        $or: [
+          { manager: { $exists: true, $ne: null } },
+          { store_keeper: { $exists: true, $ne: null } }
+        ],
         isActive: true
       });
 
-      console.log(`[QC Approval] Found ${purchaserStores.length} stores with purchaser='ROLE_PURCHASER'`);
+      console.log(`[QC Approval] Found ${targetStores.length} stores with manager or store_keeper roles`);
 
-      // Fallback: if no purchaser stores found, try finding generic stores (optional, based on业务 logic)
-      if (purchaserStores.length === 0) {
-        console.warn('[QC Approval] No stores found with purchaser="ROLE_PURCHASER". Trying fallback to find any active store to avoid data loss (optional policy).');
-        // Uncomment below if you want tofallback to all active stores or specific manager stores
-        // purchaserStores = await Store.find({ isActive: true }); 
+      // Fallback: if no role-assigned stores found, try finding generic stores (optional, based on business logic)
+      if (targetStores.length === 0) {
+        console.warn('[QC Approval] No stores found with manager or store_keeper roles. Trying fallback to find any active store to avoid data loss (optional policy).');
+        // Uncomment below if you want to fallback to all active stores
+        // targetStores = await Store.find({ isActive: true }); 
       }
 
-      if (purchaserStores.length === 0) {
+      if (targetStores.length === 0) {
         console.warn('[QC Approval] CRITICAL: No target stores found to add stock. Stock will NOT be updated in any store.');
       }
 
-      // Create store stock entries for each purchaser store
-      for (const store of purchaserStores) {
+      // Create store stock entries for each target store
+      for (const store of targetStores) {
         // Check if store stock already exists for this product and store
         const existingStock = await StoreStock.findOne({
           product: product._id,

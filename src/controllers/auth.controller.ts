@@ -132,17 +132,25 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   await user.save();
 
   // Handle role properly based on the user model definition
-  const roleInfo = user.role || 'biller';
+  const roleInfo = user.role || 'admin';
 
   // Get role permissions based on role
   let permissions: string[] = [];
   if (user.role === 'superadmin' || user.role === 'admin') {
     // Super admin and admin get all permissions
     permissions = ['*'];
-  } else if (user.role === 'purchaser') {
-    permissions = ['manage_purchases', 'manage_inventory', 'manage_packing', 'manage_qc', 'manage_suppliers', 'manage_expenses'];
-  } else if (user.role === 'biller') {
-    permissions = ['manage_sales', 'manage_inventory'];
+  } else if (user.role === 'manager') {
+    permissions = ['manage_inventory', 'manage_sales', 'manage_purchases'];
+  } else if (user.role === 'store_keeper') {
+    permissions = ['manage_inventory', 'manage_stock'];
+  } else if (user.role === 'marketing_executive') {
+    permissions = ['manage_marketing', 'manage_customers', 'manage_sales'];
+  } else if (user.role === 'pickup_boy') {
+    permissions = ['manage_pickups', 'manage_deliveries'];
+  } else if (user.role === 'telecaller') {
+    permissions = ['manage_customers', 'manage_leads'];
+  } else if (user.role === 'logistic_coordinator') {
+    permissions = ['manage_logistics', 'manage_deliveries', 'manage_inventory'];
   } else {
     permissions = [];
   }
@@ -222,17 +230,25 @@ export const refresh = asyncHandler(async (req: Request, res: Response) => {
     }
 
     // Handle role properly based on the user model definition
-    const roleInfo = user.role || 'biller';
+    const roleInfo = user.role || 'admin';
 
     // Get role permissions based on role
     let permissions: string[] = [];
     if (user.role === 'superadmin' || user.role === 'admin') {
       // Super admin and admin get all permissions
       permissions = ['*'];
-    } else if (user.role === 'purchaser') {
-      permissions = ['manage_purchases', 'manage_inventory', 'manage_packing', 'manage_qc', 'manage_suppliers', 'manage_expenses'];
-    } else if (user.role === 'biller') {
-      permissions = ['manage_sales', 'manage_inventory'];
+    } else if (user.role === 'manager') {
+      permissions = ['manage_inventory', 'manage_sales', 'manage_purchases'];
+    } else if (user.role === 'store_keeper') {
+      permissions = ['manage_inventory', 'manage_stock'];
+    } else if (user.role === 'marketing_executive') {
+      permissions = ['manage_marketing', 'manage_customers', 'manage_sales'];
+    } else if (user.role === 'pickup_boy') {
+      permissions = ['manage_pickups', 'manage_deliveries'];
+    } else if (user.role === 'telecaller') {
+      permissions = ['manage_customers', 'manage_leads'];
+    } else if (user.role === 'logistic_coordinator') {
+      permissions = ['manage_logistics', 'manage_deliveries', 'manage_inventory'];
     } else {
       permissions = [];
     }
@@ -282,17 +298,25 @@ export const me = asyncHandler(async (req: Request, res: Response) => {
   }
 
   // Handle role properly based on the user model definition
-  const roleInfo = user.role || 'biller';
+  const roleInfo = user.role || 'admin';
 
   // Get role permissions based on role
   let permissions: string[] = [];
   if (user.role === 'superadmin' || user.role === 'admin') {
     // Super admin and admin get all permissions
     permissions = ['*'];
-  } else if (user.role === 'purchaser') {
-    permissions = ['manage_purchases', 'manage_inventory', 'manage_packing', 'manage_qc', 'manage_suppliers', 'manage_expenses'];
-  } else if (user.role === 'biller') {
-    permissions = ['manage_sales', 'manage_inventory'];
+  } else if (user.role === 'manager') {
+    permissions = ['manage_inventory', 'manage_sales', 'manage_purchases'];
+  } else if (user.role === 'store_keeper') {
+    permissions = ['manage_inventory', 'manage_stock'];
+  } else if (user.role === 'marketing_executive') {
+    permissions = ['manage_marketing', 'manage_customers', 'manage_sales'];
+  } else if (user.role === 'pickup_boy') {
+    permissions = ['manage_pickups', 'manage_deliveries'];
+  } else if (user.role === 'telecaller') {
+    permissions = ['manage_customers', 'manage_leads'];
+  } else if (user.role === 'logistic_coordinator') {
+    permissions = ['manage_logistics', 'manage_deliveries', 'manage_inventory'];
   } else {
     permissions = [];
   }

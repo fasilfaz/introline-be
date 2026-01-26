@@ -4,9 +4,7 @@ export interface StoreDocument extends Document<Types.ObjectId> {
   company?: Types.ObjectId;
   name: string;
   code: string;
-  manager?: string;
-  purchaser?: string;
-  biller?: string;
+  role?: string; // Stores the role name (e.g. 'store keeper', 'manager', etc.)
   phone?: string;
   email?: string;
   address?: string;
@@ -32,9 +30,7 @@ const storeSchema = new Schema<StoreDocument>(
     company: { type: Schema.Types.ObjectId, ref: 'Company', required: false, index: true },
     name: { type: String, required: true, trim: true },
     code: { type: String, required: true, trim: true },
-    manager: { type: String },
-    purchaser: { type: String },
-    biller: { type: String },
+    role: { type: String, enum: ['admin', 'manager', 'store_keeper', 'marketing_executive', 'pickup_boy', 'telecaller', 'logistic_coordinator'], required: false },
     phone: { type: String, trim: true },
     email: { type: String, trim: true, lowercase: true },
     address: { type: String, trim: true },

@@ -17,7 +17,7 @@ import { respond } from '../utils/api-response';
 export const getDashboardMetrics = asyncHandler(async (req: Request, res: Response) => {
   // Get user info from request (set by auth middleware)
   const userId = req.user?.id;
-  const userRole = req.user?.role || 'biller';
+  const userRole = req.user?.role || 'admin';
 
   if (!userId) {
     throw ApiError.unauthorized('User not authenticated');
@@ -31,31 +31,60 @@ export const getDashboardMetrics = asyncHandler(async (req: Request, res: Respon
 
   // Find stores assigned to this user based on their role
   let assignedStores: any[] = [];
-  if (userRole === 'purchaser') {
-    // Try multiple approaches to find purchaser stores
-    assignedStores = await Store.find({ purchaser: `ROLE_PURCHASER` });
-    console.log(`Purchaser stores found by role: ${assignedStores.length}`, assignedStores.map(s => ({ name: s.name, id: s._id })));
-    
-    // If no stores found by role, try finding by name pattern
-    if (assignedStores.length === 0) {
-      assignedStores = await Store.find({ name: /purchaser/i });
-      console.log(`Purchaser stores found by name pattern: ${assignedStores.length}`, assignedStores.map(s => ({ name: s.name, id: s._id })));
-    }
-    
-    // If still no stores found, get all stores as fallback
-    if (assignedStores.length === 0) {
-      assignedStores = await Store.find({});
-      console.log(`Using all stores as fallback: ${assignedStores.length}`, assignedStores.map(s => ({ name: s.name, id: s._id })));
-    }
-  } else if (userRole === 'biller') {
-    assignedStores = await Store.find({ biller: `ROLE_BILLER` });
-    console.log(`Biller stores found: ${assignedStores.length}`, assignedStores.map(s => ({ name: s.name, id: s._id })));
-    
-    // If no stores found by role, try finding by name pattern
-    if (assignedStores.length === 0) {
-      assignedStores = await Store.find({ name: /biller/i });
-      console.log(`Biller stores found by name pattern: ${assignedStores.length}`, assignedStores.map(s => ({ name: s.name, id: s._id })));
-    }
+  if (userRole === 'manager') {
+    // Find stores assigned to manager role
+    assignedStores = await Store.find({ 
+      $or: [
+        { manager: userRole },
+        { manager: { $exists: true, $ne: null} }
+      ]
+    });
+    console.log(`Manager stores found: ${assignedStores.length}`, assignedStores.map(s => ({ name: s.name, id: s._id })));
+  } else if (userRole === 'store_keeper') {
+    // Find stores assigned to store keeper role
+    assignedStores = await Store.find({ 
+      $or: [
+        { store_keeper: userRole },
+        { store_keeper: { $exists: true, $ne: null } }
+      ]
+    });
+    console.log(`Store keeper stores found: ${assignedStores.length}`, assignedStores.map(s => ({ name: s.name, id: s._id })));
+  } else if (userRole === 'marketing_executive') {
+    // Find stores assigned to marketing executive role
+    assignedStores = await Store.find({ 
+      $or: [
+        { marketing_executive: userRole },
+        { marketing_executive: { $exists: true, $ne: null } }
+      ]
+    });
+    console.log(`Marketing executive stores found: ${assignedStores.length}`, assignedStores.map(s => ({ name: s.name, id: s._id })));
+  } else if (userRole === 'pickup_boy') {
+    // Find stores assigned to pickup boy role
+    assignedStores = await Store.find({ 
+      $or: [
+        { pickup_boy: userRole },
+        { pickup_boy: { $exists: true, $ne: null } }
+      ]
+    });
+    console.log(`Pickup boy stores found: ${assignedStores.length}`, assignedStores.map(s => ({ name: s.name, id: s._id })));
+  } else if (userRole === 'telecaller') {
+    // Find stores assigned to telecaller role
+    assignedStores = await Store.find({ 
+      $or: [
+        { telecaller: userRole },
+        { telecaller: { $exists: true, $ne: null } }
+      ]
+    });
+    console.log(`Telecaller stores found: ${assignedStores.length}`, assignedStores.map(s => ({ name: s.name, id: s._id })));
+  } else if (userRole === 'logistic_coordinator') {
+    // Find stores assigned to logistic coordinator role
+    assignedStores = await Store.find({ 
+      $or: [
+        { logistic_coordinator: userRole },
+        { logistic_coordinator: { $exists: true, $ne: null } }
+      ]
+    });
+    console.log(`Logistic coordinator stores found: ${assignedStores.length}`, assignedStores.map(s => ({ name: s.name, id: s._id })));
   }
 
   const assignedStoreIds = assignedStores.map(store => store._id);
@@ -81,23 +110,23 @@ export const getDashboardMetrics = asyncHandler(async (req: Request, res: Respon
   // Get role-based item stock data instead of category data
   let itemStockData: Array<{ name: string; stock: number; fill?: string }> = [];
   
-  if (userRole === 'purchaser') {
-    // For purchaser: get store stock data from their assigned stores (same as Store Stock page)
+  if (userRole === 'manager' || userRole === 'store_keeper' || userRole === 'marketing_executive' || userRole === 'pickup_boy' || userRole === 'telecaller' || userRole === 'logistic_coordinator') {
+    // For role-based users: get store stock data from their assigned stores (same as Store Stock page)
     let storeStockQuery = {};
     if (assignedStoreIds.length > 0) {
       storeStockQuery = { store: { $in: assignedStoreIds } };
     } else {
       // If no assigned stores, show all store stock (fallback)
-      console.log('No assigned stores found for purchaser, showing all store stock');
+      console.log(`No assigned stores found for ${userRole}, showing all store stock`);
     }
     
-    console.log('Purchaser store stock query:', storeStockQuery);
-    const purchaserStoreStockRecords = await StoreStock.find(storeStockQuery).populate('product');
-    console.log(`Purchaser store stock records found: ${purchaserStoreStockRecords.length}`);
+    console.log(`${userRole} store stock query:`, storeStockQuery);
+    const roleStoreStockRecords = await StoreStock.find(storeStockQuery).populate('product');
+    console.log(`${userRole} store stock records found: ${roleStoreStockRecords.length}`);
     
     const storeStockAggregates: Record<string, { name: string; total: number }> = {};
     
-    purchaserStoreStockRecords.forEach((record) => {
+    roleStoreStockRecords.forEach((record) => {
       const product = record.product as any;
       if (!product) return;
 
@@ -111,47 +140,7 @@ export const getDashboardMetrics = asyncHandler(async (req: Request, res: Respon
       storeStockAggregates[key].total += record.quantity;
     });
 
-    console.log(`Purchaser store stock aggregates: ${Object.keys(storeStockAggregates).length} items`);
-
-    itemStockData = Object.values(storeStockAggregates)
-      .sort((a, b) => b.total - a.total)
-      .slice(0, 10) // Top 10 items
-      .map((item, index) => ({
-        name: item.name,
-        stock: item.total,
-        fill: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#84cc16', '#f97316', '#ec4899', '#14b8a6'][index % 10]
-      }));
-  } else if (userRole === 'biller') {
-    // For biller: get store stock data from their assigned stores
-    let storeStockQuery = {};
-    if (assignedStoreIds.length > 0) {
-      storeStockQuery = { store: { $in: assignedStoreIds } };
-    } else {
-      // If no assigned stores, show all store stock (fallback)
-      console.log('No assigned stores found for biller, showing all store stock');
-    }
-    
-    console.log('Biller store stock query:', storeStockQuery);
-    const billerStoreStockRecords = await StoreStock.find(storeStockQuery).populate('product');
-    console.log(`Biller store stock records found: ${billerStoreStockRecords.length}`);
-    
-    const storeStockAggregates: Record<string, { name: string; total: number }> = {};
-    
-    billerStoreStockRecords.forEach((record) => {
-      const product = record.product as any;
-      if (!product) return;
-
-      const key = product._id.toString();
-      if (!storeStockAggregates[key]) {
-        storeStockAggregates[key] = {
-          name: product.name,
-          total: 0
-        };
-      }
-      storeStockAggregates[key].total += record.quantity;
-    });
-
-    console.log(`Biller store stock aggregates: ${Object.keys(storeStockAggregates).length} items`);
+    console.log(`${userRole} store stock aggregates: ${Object.keys(storeStockAggregates).length} items`);
 
     itemStockData = Object.values(storeStockAggregates)
       .sort((a, b) => b.total - a.total)
@@ -214,9 +203,9 @@ export const getDashboardMetrics = asyncHandler(async (req: Request, res: Respon
     salesData.push({ day: dayDate.toISOString().split('T')[0], sales: Math.round(daySales) });
   }
 
-  // Generate purchase entry turnover data for purchaser, admin, and superadmin
+  // Generate purchase entry turnover data for manager, admin, and superadmin
   let purchaseEntryData: Array<{ day: string; purchases: number }> = [];
-  if (userRole === 'purchaser' || userRole === 'admin' || userRole === 'superadmin') {
+  if (userRole === 'manager' || userRole === 'admin' || userRole === 'superadmin') {
     for (let i = 29; i >= 0; i -= 1) {
       const dayDate = subDays(today, i);
       const dayPurchases = purchaseEntries
@@ -232,48 +221,19 @@ export const getDashboardMetrics = asyncHandler(async (req: Request, res: Respon
   let fastMovingItems: Array<{ name: string; avgQuantity: number }> = [];
   let slowMovingItems: Array<{ name: string; avgQuantity: number }> = [];
 
-  if (userRole === 'purchaser') {
-    // For purchaser: use store stock data from their assigned stores (same as Store Stock page)
+  if (userRole === 'manager' || userRole === 'store_keeper' || userRole === 'marketing_executive' || userRole === 'pickup_boy' || userRole === 'telecaller' || userRole === 'logistic_coordinator') {
+    // For role-based users: use store stock data from their assigned stores (same as Store Stock page)
     let storeStockQuery = {};
     if (assignedStoreIds.length > 0) {
       storeStockQuery = { store: { $in: assignedStoreIds } };
     } else {
-      console.log('No assigned stores for purchaser fast/slow items, using all store stock');
+      console.log(`No assigned stores for ${userRole} fast/slow items, using all store stock`);
     }
     
-    const purchaserStoreStockRecords = await StoreStock.find(storeStockQuery).populate('product');
+    const roleStoreStockRecords = await StoreStock.find(storeStockQuery).populate('product');
     const storeStockAggregates: Record<string, { name: string; total: number }> = {};
     
-    purchaserStoreStockRecords.forEach((record) => {
-      const product = record.product as any;
-      if (!product) return;
-
-      const key = product._id.toString();
-      if (!storeStockAggregates[key]) {
-        storeStockAggregates[key] = {
-          name: product.name,
-          total: 0
-        };
-      }
-      storeStockAggregates[key].total += record.quantity;
-    });
-
-    const sortedItems = Object.values(storeStockAggregates).sort((a, b) => b.total - a.total);
-    fastMovingItems = sortedItems.slice(0, 5).map((item) => ({ name: item.name, avgQuantity: item.total }));
-    slowMovingItems = sortedItems.slice(-5).map((item) => ({ name: item.name, avgQuantity: item.total }));
-  } else if (userRole === 'biller') {
-    // For biller: use store stock data from their assigned stores
-    let storeStockQuery = {};
-    if (assignedStoreIds.length > 0) {
-      storeStockQuery = { store: { $in: assignedStoreIds } };
-    } else {
-      console.log('No assigned stores for biller fast/slow items, using all store stock');
-    }
-    
-    const billerStoreStockRecords = await StoreStock.find(storeStockQuery).populate('product');
-    const storeStockAggregates: Record<string, { name: string; total: number }> = {};
-    
-    billerStoreStockRecords.forEach((record) => {
+    roleStoreStockRecords.forEach((record) => {
       const product = record.product as any;
       if (!product) return;
 

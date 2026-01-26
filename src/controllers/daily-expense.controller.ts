@@ -27,10 +27,7 @@ export const listDailyExpenses = asyncHandler(async (req: Request, res: Response
   }
 
   // Apply user-specific filtering based on role
-  if (user.role === 'purchaser' || user.role === 'biller') {
-    // Purchasers and billers can only see their own created expenses
-    filters.createdBy = req.user.id;
-  }
+  // Note: purchaser and biller roles have been removed from the system
   // superadmin and admin can see all expenses (no additional filter needed)
 
   if (supplierId) {
@@ -115,10 +112,7 @@ export const updateDailyExpense = asyncHandler(async (req: Request, res: Respons
 
   // Build query filters based on user role
   const filters: Record<string, unknown> = { _id: id };
-  if (user.role === 'purchaser' || user.role === 'biller') {
-    // Purchasers and billers can only update their own created expenses
-    filters.createdBy = req.user.id;
-  }
+  // Note: purchaser and biller roles have been removed from the system
 
   const expense = await DailyExpense.findOne(filters);
   if (!expense) {
@@ -170,10 +164,7 @@ export const deleteDailyExpense = asyncHandler(async (req: Request, res: Respons
 
   // Build query filters based on user role
   const filters: Record<string, unknown> = { _id: req.params.id };
-  if (user.role === 'purchaser' || user.role === 'biller') {
-    // Purchasers and billers can only delete their own created expenses
-    filters.createdBy = req.user.id;
-  }
+  // Note: purchaser and biller roles have been removed from the system
 
   const expense = await DailyExpense.findOne(filters);
   if (!expense) {

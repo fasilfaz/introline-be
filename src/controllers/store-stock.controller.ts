@@ -53,14 +53,26 @@ export const listStoreStock = asyncHandler(async (req: Request, res: Response) =
 
   // Add role-based filtering
   if (userRole && userRole !== 'admin' && userRole !== 'superadmin') {
-    const roleField = userRole === 'biller' ? 'storeData.biller' : 
-                     userRole === 'purchaser' ? 'storeData.purchaser' : null;
-    
+    let roleField: string | null = null;
+    if (userRole === 'manager') {
+      roleField = 'storeData.manager';
+    } else if (userRole === 'store_keeper') {
+      roleField = 'storeData.store_keeper';
+    } else if (userRole === 'marketing_executive') {
+      roleField = 'storeData.marketing_executive';
+    } else if (userRole === 'pickup_boy') {
+      roleField = 'storeData.pickup_boy';
+    } else if (userRole === 'telecaller') {
+      roleField = 'storeData.telecaller';
+    } else if (userRole === 'logistic_coordinator') {
+      roleField = 'storeData.logistic_coordinator';
+    }
+      
     if (roleField) {
-      pipeline.push({
-        $match: {
-          [roleField]: `ROLE_${userRole.toUpperCase()}`
-        }
+      pipeline.push({ 
+        $match: { 
+          [roleField]: { $exists: true, $nin: [null, ''] } 
+        } 
       });
     }
   }
@@ -128,8 +140,12 @@ export const listStoreStock = asyncHandler(async (req: Request, res: Response) =
         name: '$storeData.name',
         code: '$storeData.code',
         type: '$storeData.type',
-        biller: '$storeData.biller',
-        purchaser: '$storeData.purchaser'
+        manager: '$storeData.manager',
+        store_keeper: '$storeData.store_keeper',
+        marketing_executive: '$storeData.marketing_executive',
+        pickup_boy: '$storeData.pickup_boy',
+        telecaller: '$storeData.telecaller',
+        logistic_coordinator: '$storeData.logistic_coordinator'
       },
       lastUpdatedBy: {
         _id: '$lastUpdatedByData._id',
@@ -172,11 +188,32 @@ export const listStoreStock = asyncHandler(async (req: Request, res: Response) =
         }
       },
       // Apply same role-based filtering for count
-      ...(userRole && userRole !== 'admin' && userRole !== 'superadmin' ? [{
-        $match: {
-          [`storeData.${userRole === 'biller' ? 'biller' : userRole === 'purchaser' ? 'purchaser' : 'none'}`]: `ROLE_${userRole.toUpperCase()}`
+      ...(userRole && userRole !== 'admin' && userRole !== 'superadmin' ? (() => {
+        let condition: Record<string, any> | null = null;
+        
+        switch (userRole) {
+          case 'manager':
+            condition = { 'storeData.manager': { $exists: true, $nin: [null, ''] } };
+            break;
+          case 'store_keeper':
+            condition = { 'storeData.store_keeper': { $exists: true, $nin: [null, ''] } };
+            break;
+          case 'marketing_executive':
+            condition = { 'storeData.marketing_executive': { $exists: true, $nin: [null, ''] } };
+            break;
+          case 'pickup_boy':
+            condition = { 'storeData.pickup_boy': { $exists: true, $nin: [null, ''] } };
+            break;
+          case 'telecaller':
+            condition = { 'storeData.telecaller': { $exists: true, $nin: [null, ''] } };
+            break;
+          case 'logistic_coordinator':
+            condition = { 'storeData.logistic_coordinator': { $exists: true, $nin: [null, ''] } };
+            break;
         }
-      }] : []),
+        
+        return condition ? [{ $match: condition }] : [];
+      })() : []),
       { $count: 'total' }
     ])
   ]);

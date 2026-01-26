@@ -38,25 +38,14 @@ export const createStore = asyncHandler(async (req: Request, res: Response) => {
     taxCode
   };
 
-  // Assign the store to the selected role
+  // Assign the selected role to the store
   if (managerId) {
-    if (managerId === 'purchaser') {
-      // We'll use a special identifier to indicate this store is assigned to the purchaser role
-      storeData.purchaser = 'ROLE_PURCHASER';
-    } else if (managerId === 'biller') {
-      // We'll use a special identifier to indicate this store is assigned to the biller role
-      storeData.biller = 'ROLE_BILLER';
-    }
-    // We can also set a generic manager for administrative purposes
-    storeData.manager = 'ROLE_MANAGER';
+    storeData.role = managerId; // Store the role name directly
   }
 
   const store = await Store.create(storeData);
 
-  const populatedStore = await Store.findById(store._id)
-    .populate('manager', 'firstName lastName email')
-    .populate('purchaser', 'firstName lastName email')
-    .populate('biller', 'firstName lastName email');
+  const populatedStore = await Store.findById(store._id);
 
   return respond(res, StatusCodes.CREATED, populatedStore, { message: 'Store created successfully' });
 });
@@ -90,30 +79,17 @@ export const updateStore = asyncHandler(async (req: Request, res: Response) => {
   // Handle role-based assignment
   if (managerId !== undefined) {
     if (managerId === null || managerId === '') {
-      // Clear all role assignments
-      store.purchaser = undefined;
-      store.biller = undefined;
-      store.manager = undefined;
+      // Clear the role assignment
+      store.role = undefined;
     } else {
-      // Assign the store to the selected role
-      if (managerId === 'purchaser') {
-        store.purchaser = 'ROLE_PURCHASER';
-        store.biller = undefined;
-      } else if (managerId === 'biller') {
-        store.biller = 'ROLE_BILLER';
-        store.purchaser = undefined;
-      }
-      // We can also set a generic manager for administrative purposes
-      store.manager = 'ROLE_MANAGER';
+      // Assign the selected role to the store
+      store.role = managerId;
     }
   }
 
   await store.save();
 
-  const updatedStore = await Store.findById(store._id)
-    .populate('manager', 'firstName lastName email')
-    .populate('purchaser', 'firstName lastName email')
-    .populate('biller', 'firstName lastName email');
+  const updatedStore = await Store.findById(store._id);
 
   return respond(res, StatusCodes.OK, updatedStore, { message: 'Store updated successfully' });
 });
@@ -147,39 +123,28 @@ export const listStores = asyncHandler(async (req: Request, res: Response) => {
   // Apply role-based filtering
   if (userRole && userRole !== 'admin' && userRole !== 'superadmin') {
     // For non-admin users, filter based on their role
-    if (userRole === 'purchaser') {
-      baseFilters.purchaser = 'ROLE_PURCHASER';
-    } else if (userRole === 'biller') {
-      baseFilters.biller = 'ROLE_BILLER';
-    } else {
-      // For other roles, return empty array
-      console.log('Unknown role, returning empty array');
-      return respond(res, StatusCodes.OK, []);
-    }
+    baseFilters.role = userRole;
   }
 
   // Log the final filters
   console.log('Final baseFilters:', JSON.stringify(baseFilters, null, 2));
 
   // First, let's check all stores to see what's in the database
-  const allStores = await Store.find({ isActive: true }).select('name code purchaser biller manager');
+  const allStores = await Store.find({ isActive: true }).select('name code role');
   console.log('All active stores in database:');
   allStores.forEach(store => {
-    console.log(`- ${store.name} (${store.code}): purchaser=${store.purchaser}, biller=${store.biller}, manager=${store.manager}`);
+    console.log(`- ${store.name} (${store.code}): role=${store.role}`);
   });
 
   // Execute the query
   stores = await Store.find(baseFilters)
-    .populate('manager', 'firstName lastName email')
-    .populate('purchaser', 'firstName lastName email')
-    .populate('biller', 'firstName lastName email')
     .sort({ name: 1 });
 
   // Log for debugging
   console.log('Store filtering - userRole:', userRole);
   console.log('Store filtering - baseFilters:', baseFilters);
   console.log('Store filtering - found stores:', stores.length);
-  console.log('Found stores:', stores.map(s => ({ name: s.name, code: s.code, purchaser: s.purchaser, biller: s.biller })));
+  console.log('Found stores:', stores.map(s => ({ name: s.name, code: s.code })));
   console.log('=== End Store List Request ===');
 
   return respond(res, StatusCodes.OK, stores);
@@ -188,10 +153,7 @@ export const listStores = asyncHandler(async (req: Request, res: Response) => {
 export const getStore = asyncHandler(async (req: Request, res: Response) => {
   // Removed company context check since we're removing company context
 
-  const store = await Store.findOne({ _id: req.params.id, isActive: true })
-    .populate('manager', 'firstName lastName email')
-    .populate('purchaser', 'firstName lastName email')
-    .populate('biller', 'firstName lastName email');
+  const store = await Store.findOne({ _id: req.params.id, isActive: true });
 
   if (!store) {
     throw ApiError.notFound('Store not found');
