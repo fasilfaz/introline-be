@@ -9,53 +9,70 @@ export interface PackingListDocument extends Document<Types.ObjectId> {
   plannedBundleCount: number; // Number of bundles planned for packing
   actualBundleCount: number; // Number of bundles packed after completion
   packingStatus: 'pending' | 'in_progress' | 'completed'; // Current status of packing process
+  company?: Types.ObjectId; // For legacy index compatibility
+  boxNumber?: string; // For legacy index compatibility
+  count?: number; // New sequential count
   createdAt: Date;
   updatedAt: Date;
 }
 
 const packingListSchema = new Schema<PackingListDocument>(
   {
-    bookingReference: { 
-      type: Schema.Types.ObjectId, 
-      ref: 'Booking', 
+    bookingReference: {
+      type: Schema.Types.ObjectId,
+      ref: 'Booking',
       required: true,
-      index: true 
+      index: true
     },
-    packingListCode: { 
-      type: String, 
+    packingListCode: {
+      type: String,
       unique: true,
-      trim: true 
+      trim: true
     },
-    netWeight: { 
-      type: Number, 
-      required: true, 
-      min: 0 
+    netWeight: {
+      type: Number,
+      required: true,
+      min: 0
     },
-    grossWeight: { 
-      type: Number, 
-      required: true, 
-      min: 0 
+    grossWeight: {
+      type: Number,
+      required: true,
+      min: 0
     },
-    packedBy: { 
-      type: String, 
-      required: true, 
-      trim: true 
+    packedBy: {
+      type: String,
+      required: true,
+      trim: true
     },
-    plannedBundleCount: { 
-      type: Number, 
-      required: true, 
-      min: 0 
+    plannedBundleCount: {
+      type: Number,
+      required: true,
+      min: 0
     },
-    actualBundleCount: { 
-      type: Number, 
-      required: true, 
+    actualBundleCount: {
+      type: Number,
+      required: true,
       min: 0,
-      default: 0 
+      default: 0
     },
-    packingStatus: { 
-      type: String, 
-      enum: ['pending', 'in_progress', 'completed'], 
-      default: 'pending' 
+    packingStatus: {
+      type: String,
+      enum: ['pending', 'in_progress', 'completed'],
+      default: 'pending'
+    },
+    company: {
+      type: Schema.Types.ObjectId,
+      default: null,
+      index: true
+    },
+    boxNumber: {
+      type: String,
+      default: null,
+      index: true
+    },
+    count: {
+      type: Number,
+      default: 0
     }
   },
   {
@@ -71,18 +88,34 @@ packingListSchema.index({ createdAt: -1 });
 
 // Pre-save middleware to auto-generate packing list code
 packingListSchema.pre('save', async function (next) {
-  if (this.isNew && !this.packingListCode) {
+  if (this.isNew) {
     try {
-      // Generate unique packing list code (e.g., PL-2024-001)
       const year = new Date().getFullYear();
       const PackingListModel = this.constructor as any;
-      const count = await PackingListModel.countDocuments({
-        packingListCode: new RegExp(`^PL-${year}-`)
-      });
-      this.packingListCode = `PL-${year}-${String(count + 1).padStart(3, '0')}`;
-      console.log('Generated packing list code:', this.packingListCode);
+
+      // 1. Generate Global Sequential Count
+      if (!this.count) {
+        const lastRecord = await PackingListModel.findOne().sort({ count: -1 });
+        this.count = (lastRecord?.count || 0) + 1;
+      }
+
+      // 2. Generate packingListCode (e.g., PL-2024-001) if not provided
+      if (!this.packingListCode) {
+        const yearCount = await PackingListModel.countDocuments({
+          packingListCode: new RegExp(`^PL-${year}-`)
+        });
+        this.packingListCode = `PL-${year}-${String(yearCount + 1).padStart(3, '0')}`;
+      }
+
+      // 3. Set boxNumber to packingListCode to satisfy legacy unique index { company: 1, boxNumber: 1 }
+      // Since company is null/undefined for new records, boxNumber MUST be unique.
+      if (!this.boxNumber) {
+        this.boxNumber = this.packingListCode;
+      }
+
+      console.log('Generated packing list - Code:', this.packingListCode, 'Count:', this.count, 'BoxNumber:', this.boxNumber);
     } catch (error) {
-      console.error('Error generating packing list code:', error);
+      console.error('Error in packing list pre-save middleware:', error);
       return next(error as Error);
     }
   }
