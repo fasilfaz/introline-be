@@ -13,9 +13,9 @@ export const getCompany = asyncHandler(async (req: Request, res: Response) => {
   // If no company exists, create a default one
   if (!company) {
     company = await Company.create({
-      name: 'AL LIBAS GENERAL TRADING L L C',
-      description: 'SHOP NO 5',
-      address: 'STANDARD HOMES REAL ESTATE BUILDING',
+      name: 'Introlines ',
+      description: 'No.25(2)/22, Ground Floor,',
+      address: 'Opp Vinayakar Kovil, Kumarapuram 1st Street Ryapuram,',
       city: 'AJMAN',
       state: 'INDUSTRIAL AREA 2',
       country: 'UNITED ARAB EMIRATES',
@@ -42,9 +42,9 @@ export const updateCompany = asyncHandler(async (req: Request, res: Response) =>
   // If no company exists, create a default one
   if (!company) {
     company = await Company.create({
-      name: 'AL LIBAS GENERAL TRADING L L C',
-      description: 'SHOP NO 5',
-      address: 'STANDARD HOMES REAL ESTATE BUILDING',
+      name: 'Introlines ',
+      description: 'No.25(2)/22, Ground Floor,',
+      address: 'Opp Vinayakar Kovil, Kumarapuram 1st Street Ryapuram,',
       city: 'AJMAN',
       state: 'INDUSTRIAL AREA 2',
       country: 'UNITED ARAB EMIRATES',

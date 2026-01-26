@@ -165,9 +165,9 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   // Get company info (using user._id as companyId since we're removing company context)
   const company = {
     id: user._id,
-    name: 'AL LIBAS GENERAL TRADING L L C',
-    description: 'SHOP NO 5',
-    address: 'STANDARD HOMES REAL ESTATE BUILDING',
+    name: 'Introlines ',
+    description: 'No.25(2)/22, Ground Floor,',
+    address: 'Opp Vinayakar Kovil, Kumarapuram 1st Street Ryapuram,',
     city: 'AJMAN',
     state: 'INDUSTRIAL AREA 2',
     country: 'UNITED ARAB EMIRATES',
@@ -300,9 +300,9 @@ export const me = asyncHandler(async (req: Request, res: Response) => {
   // Get company info (using user._id as companyId since we're removing company context)
   const company = {
     id: user._id,
-    name: 'AL LIBAS GENERAL TRADING L L C',
-    description: 'SHOP NO 5',
-    address: 'STANDARD HOMES REAL ESTATE BUILDING',
+    name: 'Introlines ',
+    description: 'No.25(2)/22, Ground Floor,',
+    address: 'Opp Vinayakar Kovil, Kumarapuram 1st Street Ryapuram,',
     city: 'AJMAN',
     state: 'INDUSTRIAL AREA 2',
     country: 'UNITED ARAB EMIRATES',
