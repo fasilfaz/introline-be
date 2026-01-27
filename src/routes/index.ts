@@ -28,6 +28,7 @@ import priceListingRoutes from './price-listing.routes';
 import bookingRoutes from './booking.routes';
 import reminderRoutes from './reminder.routes';
 import containerRoutes from './container.routes';
+import pickupAssignRoutes from './pickup-assign.routes';
 
 const apiRouter = Router();
 
@@ -59,5 +60,6 @@ apiRouter.use('/price-listings', priceListingRoutes);
 apiRouter.use('/bookings', bookingRoutes);
 apiRouter.use('/reminders', reminderRoutes);
 apiRouter.use('/containers', containerRoutes);
+apiRouter.use('/pickup-assigns', pickupAssignRoutes);
 
 export default apiRouter;
