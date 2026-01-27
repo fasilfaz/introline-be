@@ -10,6 +10,7 @@ export interface BookingDocument extends Document<Types.ObjectId> {
   expectedReceivingDate: Date; // Expected receiving date
   bundleCount: number; // Number of bundles
   status: 'pending' | 'success';
+  repacking: boolean; // Repacking status - true/false
   store?: Types.ObjectId; // Reference to Store
   createdAt: Date;
   updatedAt: Date;
@@ -69,6 +70,10 @@ const bookingSchema = new Schema<BookingDocument>(
       type: String, 
       enum: ['pending', 'success'], 
       default: 'pending' 
+    },
+    repacking: { 
+      type: Boolean, 
+      default: false 
     },
     store: { 
       type: Schema.Types.ObjectId, 

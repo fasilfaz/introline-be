@@ -169,6 +169,7 @@ export const createBooking = asyncHandler(async (req: Request, res: Response) =>
     expectedReceivingDate,
     bundleCount,
     status,
+    repacking,
     store
   } = req.body;
 
@@ -240,6 +241,7 @@ export const createBooking = asyncHandler(async (req: Request, res: Response) =>
     expectedReceivingDate: expectedDate,
     bundleCount: Number(bundleCount),
     status: status || 'pending',
+    repacking: repacking || false,
     store: store || undefined
   };
 
@@ -303,6 +305,7 @@ export const updateBooking = asyncHandler(async (req: Request, res: Response) =>
     expectedReceivingDate,
     bundleCount,
     status,
+    repacking,
     store
   } = req.body;
 
