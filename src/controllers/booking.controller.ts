@@ -361,6 +361,7 @@ export const updateBooking = asyncHandler(async (req: Request, res: Response) =>
   if (expectedReceivingDate !== undefined) updates.expectedReceivingDate = new Date(expectedReceivingDate);
   if (bundleCount !== undefined) updates.bundleCount = Number(bundleCount);
   if (status !== undefined) updates.status = status;
+  if (repacking !== undefined) updates.repacking = repacking;
   if (store !== undefined) updates.store = store;
 
   // Validate dates if both are being updated
