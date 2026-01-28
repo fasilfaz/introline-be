@@ -14,7 +14,7 @@ export interface BookingDocument extends Document<Types.ObjectId> {
   expectedReceivingDate: Date; // Expected receiving date
   bundleCount: number; // Number of bundles
   status: 'pending' | 'success';
-  repacking: boolean; // Repacking status - true/false
+  repacking: 'ready-to-ship' | 'repacking-required'; // Repacking status
   store?: Types.ObjectId; // Reference to Store
   createdAt: Date;
   updatedAt: Date;
