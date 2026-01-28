@@ -228,6 +228,11 @@ export const createBooking = asyncHandler(async (req: Request, res: Response) =>
     throw ApiError.badRequest('Bundle count must be at least 1');
   }
 
+  // Validate repacking status if provided
+  if (repacking && !['ready-to-ship', 'repacking-required'].includes(repacking)) {
+    throw ApiError.badRequest('Invalid repacking status. Must be "ready-to-ship" or "repacking-required"');
+  }
+
   // Generate booking code using sender name, receiver name and date
   const bookingCode = await generateBookingCode(senderCustomer.name, receiverCustomer.name, bookingDate);
   
@@ -241,7 +246,7 @@ export const createBooking = asyncHandler(async (req: Request, res: Response) =>
     expectedReceivingDate: expectedDate,
     bundleCount: Number(bundleCount),
     status: status || 'pending',
-    repacking: repacking || false,
+    repacking: repacking || 'ready-to-ship',
     store: store || undefined
   };
 
@@ -361,7 +366,13 @@ export const updateBooking = asyncHandler(async (req: Request, res: Response) =>
   if (expectedReceivingDate !== undefined) updates.expectedReceivingDate = new Date(expectedReceivingDate);
   if (bundleCount !== undefined) updates.bundleCount = Number(bundleCount);
   if (status !== undefined) updates.status = status;
-  if (repacking !== undefined) updates.repacking = repacking;
+  if (repacking !== undefined) {
+    // Validate the repacking status value
+    if (!['ready-to-ship', 'repacking-required'].includes(repacking)) {
+      throw ApiError.badRequest('Invalid repacking status. Must be "ready-to-ship" or "repacking-required"');
+    }
+    updates.repacking = repacking;
+  }
   if (store !== undefined) updates.store = store;
 
   // Validate dates if both are being updated
