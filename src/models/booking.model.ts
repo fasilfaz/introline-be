@@ -87,9 +87,10 @@ const bookingSchema = new Schema<BookingDocument>(
       enum: ['pending', 'success'],
       default: 'pending'
     },
-    repacking: {
-      type: Boolean,
-      default: false
+     repacking: { 
+      type: String, 
+      enum: ['ready-to-ship', 'repacking-required'],
+      default: 'ready-to-ship'
     },
     store: {
       type: Schema.Types.ObjectId,
