@@ -12,35 +12,35 @@ import { getPaginationParams } from '../utils/pagination';
 import { buildPaginationMeta } from '../utils/query-builder';
 
 // Helper function to generate a unique booking code from sender name, receiver name and date
-const generateBookingCode = async (senderName: string, receiverName: string, date: Date): Promise<string> => {
+const generateBookingCode = async (senderName: string, receiverName: string, stuffingDate: Date): Promise<string> => {
   // Clean the names by removing spaces and special characters, taking first 3 letters of each
   const cleanSender = senderName.replace(/[^a-zA-Z0-9]/g, '').substring(0, 3).toUpperCase();
   const cleanReceiver = receiverName.replace(/[^a-zA-Z0-9]/g, '').substring(0, 3).toUpperCase();
-  
+
   // Format the date as YYYYMMDD
-  const formattedDate = new Date(date).toISOString().split('T')[0].replace(/-/g, '');
-  
+  const formattedDate = new Date(stuffingDate).toISOString().split('T')[0].replace(/-/g, '');
+
   // Try to create a booking code and ensure it's unique
   let sequence = 1;
   let bookingCode: string;
-  
+
   do {
     // Pad the sequence number with leading zeros
     const seqStr = sequence.toString().padStart(3, '0');
-    
+
     // Create the booking code: SENDER_RECEIVER_DATE_SEQ
     bookingCode = `${cleanSender}_${cleanReceiver}_${formattedDate}_${seqStr}`;
-    
+
     // Check if this booking code already exists
     const existingBooking = await Booking.findOne({ bookingCode });
-    
+
     if (!existingBooking) {
       return bookingCode; // Return the unique code
     }
-    
+
     sequence++; // Increment sequence and try again
   } while (sequence <= 999); // Limit to 999 tries to avoid infinite loop
-  
+
   // Fallback: use timestamp if all sequences are taken
   const timestamp = Date.now().toString().slice(-6);
   return `${cleanSender}_${cleanReceiver}_${formattedDate}_${timestamp}`;
@@ -84,7 +84,7 @@ export const listBookings = asyncHandler(async (req: Request, res: Response) => 
   query.skip((page - 1) * limit).limit(limit);
 
   const [rawBookings, total] = await Promise.all([
-    query.exec(), 
+    query.exec(),
     Booking.countDocuments(filters)
   ]);
 
@@ -94,36 +94,36 @@ export const listBookings = asyncHandler(async (req: Request, res: Response) => 
     if (booking.pickupPartner === 'Self' || booking.pickupPartner === 'Central') {
       return booking;
     }
-    
+
     // If pickupPartner is a valid ObjectId, populate it
     if (typeof booking.pickupPartner === 'string' && Types.ObjectId.isValid(booking.pickupPartner)) {
       const pickupPartner = await PickupPartner.findById(booking.pickupPartner).select('name phoneNumber');
       (booking as any).pickupPartner = pickupPartner;
     }
-    
+
     return booking;
   }));
 
   // Apply additional filters after population
   let filteredBookings = populatedBookings;
-  
+
   // Filter by receiver or sender country if provided
   if (receiverCountry && receiverCountry !== 'all') {
     filteredBookings = filteredBookings.filter((booking: any) => {
       const receiverCountryValue = (booking.receiver as any)?.country || '';
       const senderCountryValue = (booking.sender as any)?.country || '';
       const searchCountry = String(receiverCountry).toLowerCase();
-      
+
       return (
         receiverCountryValue.toLowerCase().includes(searchCountry) ||
         senderCountryValue.toLowerCase().includes(searchCountry)
       );
     });
   }
-  
+
   // If search is provided, filter results by sender/receiver names
   if (search && typeof search === 'string') {
-    filteredBookings = filteredBookings.filter((booking: any) => 
+    filteredBookings = filteredBookings.filter((booking: any) =>
       booking.sender?.name?.toLowerCase().includes(search.toLowerCase()) ||
       booking.receiver?.name?.toLowerCase().includes(search.toLowerCase()) ||
       ((booking.receiver as any)?.country || '').toLowerCase().includes(search.toLowerCase()) ||
@@ -141,11 +141,11 @@ export const getBooking = asyncHandler(async (req: Request, res: Response) => {
     .populate('sender', 'name customerType location phone whatsappNumber')
     .populate('receiver', 'name customerType branches phone country address')
     .populate('store', 'name country');
-  
+
   if (!booking) {
     throw ApiError.notFound('Booking not found');
   }
-  
+
   // Handle pickupPartner separately based on its type
   if (booking.pickupPartner === 'Self' || booking.pickupPartner === 'Central') {
     // Keep as string for special values
@@ -155,17 +155,21 @@ export const getBooking = asyncHandler(async (req: Request, res: Response) => {
     const pickupPartner = await PickupPartner.findById(booking.pickupPartner as any).select('name phoneNumber price');
     (booking as any).pickupPartner = pickupPartner;
   }
-  
+
   return respond(res, StatusCodes.OK, booking);
 });
 
 export const createBooking = asyncHandler(async (req: Request, res: Response) => {
-  const { 
+  const {
     sender,
     receiver,
     receiverBranch,
     pickupPartner,
-    date,
+    stuffingDate,
+    cutOffDate,
+    etaCok,
+    etdCok,
+    etaJea,
     expectedReceivingDate,
     bundleCount,
     status,
@@ -174,7 +178,7 @@ export const createBooking = asyncHandler(async (req: Request, res: Response) =>
   } = req.body;
 
   // Validate required fields
-  if (!sender || !receiver || !pickupPartner || !date || !expectedReceivingDate || !bundleCount) {
+  if (!sender || !receiver || !pickupPartner || !stuffingDate || !expectedReceivingDate || !bundleCount) {
     throw ApiError.badRequest('All required fields must be provided');
   }
 
@@ -216,11 +220,11 @@ export const createBooking = asyncHandler(async (req: Request, res: Response) =>
   }
 
   // Validate dates
-  const bookingDate = new Date(date);
+  const bookingDate = new Date(stuffingDate);
   const expectedDate = new Date(expectedReceivingDate);
-  
+
   if (expectedDate <= bookingDate) {
-    throw ApiError.badRequest('Expected receiving date must be after booking date');
+    throw ApiError.badRequest('Expected receiving date must be after stuffing date');
   }
 
   // Validate bundle count
@@ -230,14 +234,18 @@ export const createBooking = asyncHandler(async (req: Request, res: Response) =>
 
   // Generate booking code using sender name, receiver name and date
   const bookingCode = await generateBookingCode(senderCustomer.name, receiverCustomer.name, bookingDate);
-  
+
   const bookingData = {
     bookingCode,
     sender,
     receiver,
     receiverBranch: receiverBranch || undefined,
     pickupPartner,
-    date: bookingDate,
+    stuffingDate: bookingDate,
+    cutOffDate: cutOffDate ? new Date(cutOffDate) : undefined,
+    etaCok: etaCok ? new Date(etaCok) : undefined,
+    etdCok: etdCok ? new Date(etdCok) : undefined,
+    etaJea: etaJea ? new Date(etaJea) : undefined,
     expectedReceivingDate: expectedDate,
     bundleCount: Number(bundleCount),
     status: status || 'pending',
@@ -247,21 +255,21 @@ export const createBooking = asyncHandler(async (req: Request, res: Response) =>
 
   try {
     const booking = await Booking.create(bookingData);
-    
+
     // Manually populate the booking to handle mixed pickupPartner type
     const rawBooking = await Booking.findById(booking._id)
       .populate('sender', 'name customerType')
       .populate('receiver', 'name customerType')
       .populate('store', 'name country');
-    
+
     if (!rawBooking) {
       throw ApiError.notFound('Booking not found after creation');
     }
-    
+
     // Handle pickupPartner separately based on its type
     const bookingWithAny = rawBooking as any;
     const pickupPartnerValue = bookingWithAny.pickupPartner;
-    
+
     if (pickupPartnerValue === 'Self' || pickupPartnerValue === 'Central') {
       // Keep as string for special values
       bookingWithAny.pickupPartner = pickupPartnerValue;
@@ -270,12 +278,12 @@ export const createBooking = asyncHandler(async (req: Request, res: Response) =>
       const pickupPartner = await PickupPartner.findById(pickupPartnerValue).select('name phoneNumber');
       bookingWithAny.pickupPartner = pickupPartner;
     }
-    
+
     const populatedBooking = rawBooking;
-    
+
     // Add the booking code to the response
     (populatedBooking as any).bookingCode = booking.bookingCode;
-    
+
     return respond(res, StatusCodes.CREATED, populatedBooking, { message: 'Booking created successfully' });
   } catch (error: any) {
     console.error('Error creating booking:', error);
@@ -295,13 +303,17 @@ export const updateBooking = asyncHandler(async (req: Request, res: Response) =>
   }
 
   const updates: Record<string, unknown> = {};
-  const { 
+  const {
     bookingCode, // We don't allow updating booking code
     sender,
     receiver,
     receiverBranch,
     pickupPartner,
-    date,
+    stuffingDate,
+    cutOffDate,
+    etaCok,
+    etdCok,
+    etaJea,
     expectedReceivingDate,
     bundleCount,
     status,
@@ -357,7 +369,11 @@ export const updateBooking = asyncHandler(async (req: Request, res: Response) =>
 
   // Update other fields
   if (receiverBranch !== undefined) updates.receiverBranch = receiverBranch;
-  if (date !== undefined) updates.date = new Date(date);
+  if (stuffingDate !== undefined) updates.stuffingDate = new Date(stuffingDate);
+  if (cutOffDate !== undefined) updates.cutOffDate = cutOffDate ? new Date(cutOffDate) : undefined;
+  if (etaCok !== undefined) updates.etaCok = etaCok ? new Date(etaCok) : undefined;
+  if (etdCok !== undefined) updates.etdCok = etdCok ? new Date(etdCok) : undefined;
+  if (etaJea !== undefined) updates.etaJea = etaJea ? new Date(etaJea) : undefined;
   if (expectedReceivingDate !== undefined) updates.expectedReceivingDate = new Date(expectedReceivingDate);
   if (bundleCount !== undefined) updates.bundleCount = Number(bundleCount);
   if (status !== undefined) updates.status = status;
@@ -365,9 +381,9 @@ export const updateBooking = asyncHandler(async (req: Request, res: Response) =>
   if (store !== undefined) updates.store = store;
 
   // Validate dates if both are being updated
-  if (updates.date && updates.expectedReceivingDate) {
-    if (updates.expectedReceivingDate <= updates.date) {
-      throw ApiError.badRequest('Expected receiving date must be after booking date');
+  if (updates.stuffingDate && updates.expectedReceivingDate) {
+    if ((updates.expectedReceivingDate as Date) <= (updates.stuffingDate as Date)) {
+      throw ApiError.badRequest('Expected receiving date must be after stuffing date');
     }
   }
 
@@ -375,7 +391,7 @@ export const updateBooking = asyncHandler(async (req: Request, res: Response) =>
   if (updates.bookingCode) {
     delete updates.bookingCode;
   }
-  
+
   Object.assign(booking, updates);
   await booking.save();
 
@@ -384,11 +400,11 @@ export const updateBooking = asyncHandler(async (req: Request, res: Response) =>
     .populate('sender', 'name customerType')
     .populate('receiver', 'name customerType')
     .populate('store', 'name country');
-  
+
   if (!rawBooking) {
     throw ApiError.notFound('Booking not found after update');
   }
-  
+
   // Handle pickupPartner separately based on its type
   if (rawBooking.pickupPartner === 'Self' || rawBooking.pickupPartner === 'Central') {
     // Keep as string for special values
@@ -398,7 +414,7 @@ export const updateBooking = asyncHandler(async (req: Request, res: Response) =>
     const pickupPartner = await PickupPartner.findById(rawBooking.pickupPartner as any).select('name phoneNumber');
     (rawBooking as any).pickupPartner = pickupPartner;
   }
-  
+
   const populatedBooking = rawBooking;
 
   return respond(res, StatusCodes.OK, populatedBooking, { message: 'Booking updated successfully' });

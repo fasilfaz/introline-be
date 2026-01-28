@@ -28,7 +28,7 @@ export const listPackingLists = asyncHandler(async (req: Request, res: Response)
   }
 
   const query = PackingList.find(filters)
-    .populate('bookingReference', 'sender receiver pickupPartner date bundleCount status')
+    .populate('bookingReference', 'sender receiver pickupPartner stuffingDate cutOffDate etaCok etdCok etaJea bundleCount status')
     .populate({
       path: 'bookingReference',
       populate: [
@@ -52,14 +52,14 @@ export const listPackingLists = asyncHandler(async (req: Request, res: Response)
 });
 
 export const createPackingList = asyncHandler(async (req: Request, res: Response) => {
-  const { 
-    bookingReference, 
-    netWeight, 
-    grossWeight, 
-    packedBy, 
-    plannedBundleCount, 
-    actualBundleCount, 
-    packingStatus 
+  const {
+    bookingReference,
+    netWeight,
+    grossWeight,
+    packedBy,
+    plannedBundleCount,
+    actualBundleCount,
+    packingStatus
   } = req.body;
 
   // Validate booking reference exists
@@ -100,7 +100,7 @@ export const createPackingList = asyncHandler(async (req: Request, res: Response
 
   // Populate the response
   const populatedPackingList = await PackingList.findById(packingList._id)
-    .populate('bookingReference', 'sender receiver pickupPartner date bundleCount status')
+    .populate('bookingReference', 'sender receiver pickupPartner stuffingDate cutOffDate etaCok etdCok etaJea bundleCount status')
     .populate({
       path: 'bookingReference',
       populate: [
@@ -115,7 +115,7 @@ export const createPackingList = asyncHandler(async (req: Request, res: Response
 
 export const getPackingList = asyncHandler(async (req: Request, res: Response) => {
   const packingList = await PackingList.findById(req.params.id)
-    .populate('bookingReference', 'sender receiver pickupPartner date bundleCount status')
+    .populate('bookingReference', 'sender receiver pickupPartner stuffingDate cutOffDate etaCok etdCok etaJea bundleCount status')
     .populate({
       path: 'bookingReference',
       populate: [
@@ -139,14 +139,14 @@ export const updatePackingList = asyncHandler(async (req: Request, res: Response
     throw ApiError.notFound('Packing list not found');
   }
 
-  const { 
-    bookingReference, 
-    netWeight, 
-    grossWeight, 
-    packedBy, 
-    plannedBundleCount, 
-    actualBundleCount, 
-    packingStatus 
+  const {
+    bookingReference,
+    netWeight,
+    grossWeight,
+    packedBy,
+    plannedBundleCount,
+    actualBundleCount,
+    packingStatus
   } = req.body;
 
   // If booking reference is being changed, validate it
@@ -157,7 +157,7 @@ export const updatePackingList = asyncHandler(async (req: Request, res: Response
     }
 
     // Check if another packing list exists for this booking
-    const existingPackingList = await PackingList.findOne({ 
+    const existingPackingList = await PackingList.findOne({
       bookingReference,
       _id: { $ne: packingList._id }
     });
@@ -180,7 +180,7 @@ export const updatePackingList = asyncHandler(async (req: Request, res: Response
 
   // Populate the response
   const updatedPackingList = await PackingList.findById(packingList._id)
-    .populate('bookingReference', 'sender receiver pickupPartner date bundleCount status')
+    .populate('bookingReference', 'sender receiver pickupPartner stuffingDate cutOffDate etaCok etdCok etaJea bundleCount status')
     .populate({
       path: 'bookingReference',
       populate: [
