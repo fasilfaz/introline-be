@@ -29,7 +29,7 @@ export const listPackingLists = asyncHandler(async (req: Request, res: Response)
   }
 
   const query = PackingList.find(filters)
-    .populate('bookingReference', 'sender receiver pickupPartner date bundleCount status')
+    .populate('bookingReference', 'sender receiver pickupPartner stuffingDate cutOffDate etaCok etdCok etaJea bundleCount status')
     .populate({
       path: 'bookingReference',
       populate: [
@@ -142,7 +142,7 @@ export const createPackingList = asyncHandler(async (req: Request, res: Response
 
 export const getPackingList = asyncHandler(async (req: Request, res: Response) => {
   const packingList = await PackingList.findById(req.params.id)
-    .populate('bookingReference', 'sender receiver pickupPartner date bundleCount status')
+    .populate('bookingReference', 'sender receiver pickupPartner stuffingDate cutOffDate etaCok etdCok etaJea bundleCount status')
     .populate({
       path: 'bookingReference',
       populate: [
@@ -188,7 +188,7 @@ export const updatePackingList = asyncHandler(async (req: Request, res: Response
     }
 
     // Check if another packing list exists for this booking
-    const existingPackingList = await PackingList.findOne({ 
+    const existingPackingList = await PackingList.findOne({
       bookingReference,
       _id: { $ne: packingList._id }
     });

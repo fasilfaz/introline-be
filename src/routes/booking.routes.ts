@@ -28,7 +28,11 @@ router.post(
       // Otherwise, it must be a valid MongoDB ObjectId
       return validator.isMongoId(value);
     }).withMessage('Valid pickup partner ID is required or "Self" or "Central"'),
-    body('date').isISO8601().withMessage('Valid booking date is required'),
+    body('stuffingDate').isISO8601().withMessage('Valid stuffing date is required'),
+    body('cutOffDate').optional().isISO8601().withMessage('Valid cut off date is required'),
+    body('etaCok').optional().isISO8601().withMessage('Valid ETA COK is required'),
+    body('etdCok').optional().isISO8601().withMessage('Valid ETD COK is required'),
+    body('etaJea').optional().isISO8601().withMessage('Valid ETA JEA is required'),
     body('expectedReceivingDate').isISO8601().withMessage('Valid expected receiving date is required'),
     body('bundleCount').isInt({ min: 1 }).withMessage('Bundle count must be at least 1'),
     body('status').optional().isIn(['pending', 'success']).withMessage('Status must be pending or success'),
@@ -51,7 +55,11 @@ router.put('/:id', [
     // Otherwise, it must be a valid MongoDB ObjectId
     return validator.isMongoId(value);
   }).withMessage('Valid pickup partner ID is required or "Self" or "Central"'),
-  body('date').optional().isISO8601().withMessage('Valid booking date is required'),
+  body('stuffingDate').optional().isISO8601().withMessage('Valid stuffing date is required'),
+  body('cutOffDate').optional().isISO8601().withMessage('Valid cut off date is required'),
+  body('etaCok').optional().isISO8601().withMessage('Valid ETA COK is required'),
+  body('etdCok').optional().isISO8601().withMessage('Valid ETD COK is required'),
+  body('etaJea').optional().isISO8601().withMessage('Valid ETA JEA is required'),
   body('expectedReceivingDate').optional().isISO8601().withMessage('Valid expected receiving date is required'),
   body('bundleCount').optional().isInt({ min: 1 }).withMessage('Bundle count must be at least 1'),
   body('status').optional().isIn(['pending', 'success']).withMessage('Status must be pending or success'),
