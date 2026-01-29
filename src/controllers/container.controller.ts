@@ -12,14 +12,14 @@ const generateContainerCode = async (): Promise<string> => {
   const date = new Date();
   const year = date.getFullYear().toString().slice(-2);
   const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  
+
   // Find the last container created in this year-month
   const yearMonthPattern = `${prefix}${year}${month}`;
-  
+
   const lastContainer = await Container.findOne({
     containerCode: { $regex: `^${yearMonthPattern}` }
   }).sort({ containerCode: -1 });
-  
+
   let sequence = 1;
   if (lastContainer && lastContainer.containerCode) {
     const lastSequence = parseInt(lastContainer.containerCode.slice(-4));
@@ -27,7 +27,7 @@ const generateContainerCode = async (): Promise<string> => {
       sequence = lastSequence + 1;
     }
   }
-  
+
   return `${yearMonthPattern}${sequence.toString().padStart(4, '0')}`;
 };
 
@@ -37,14 +37,14 @@ export const listContainers = asyncHandler(async (req: Request, res: Response) =
 
   // Build filter
   const filter: any = {};
-  
+
   if (search) {
     filter.$or = [
       { containerCode: { $regex: search, $options: 'i' } },
       { companyName: { $regex: search, $options: 'i' } }
     ];
   }
-  
+
   if (status && status !== 'all') {
     filter.status = status;
   }
@@ -78,7 +78,7 @@ export const listContainers = asyncHandler(async (req: Request, res: Response) =
 
 export const getContainer = asyncHandler(async (req: Request, res: Response) => {
   const container = await Container.findById(req.params.id);
-  
+
   if (!container) {
     throw ApiError.notFound('Container not found');
   }
@@ -90,6 +90,10 @@ export const createContainer = asyncHandler(async (req: Request, res: Response) 
   const {
     companyName,
     bookingDate,
+    cutOffDate,
+    etaCok,
+    etdCok,
+    etaJea,
     bookingCharge,
     advancePayment = 0,
     status = 'pending'
@@ -99,21 +103,21 @@ export const createContainer = asyncHandler(async (req: Request, res: Response) 
   let containerCode: string;
   let attempts = 0;
   const maxAttempts = 5;
-  
+
   do {
     containerCode = await generateContainerCode();
     attempts++;
-    
+
     // Check if this code already exists
     const existingContainer = await Container.findOne({ containerCode });
     if (!existingContainer) {
       break;
     }
-    
+
     if (attempts >= maxAttempts) {
       throw ApiError.badRequest('Unable to generate unique container code after multiple attempts');
     }
-    
+
     // Wait a small amount before retrying
     await new Promise(resolve => setTimeout(resolve, 10));
   } while (attempts < maxAttempts);
@@ -125,6 +129,10 @@ export const createContainer = asyncHandler(async (req: Request, res: Response) 
     containerCode,
     companyName,
     bookingDate,
+    cutOffDate,
+    etaCok,
+    etdCok,
+    etaJea,
     bookingCharge,
     advancePayment,
     balanceAmount,
@@ -170,7 +178,7 @@ export const updateContainer = asyncHandler(async (req: Request, res: Response) 
 
 export const deleteContainer = asyncHandler(async (req: Request, res: Response) => {
   const container = await Container.findByIdAndDelete(req.params.id);
-  
+
   if (!container) {
     throw ApiError.notFound('Container not found');
   }
