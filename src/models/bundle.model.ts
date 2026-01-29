@@ -9,6 +9,9 @@ export interface BundleDocument extends Document<Types.ObjectId> {
   grossWeight?: number;
   actualCount?: number;
   status: 'pending' | 'in_progress' | 'completed';
+  priority: 'high' | 'medium' | 'low'; // Priority status
+  readyToShipStatus: 'pending' | 'stuffed' | 'dispatched'; // Ready to ship status
+  container?: Types.ObjectId; // Reference to Container (only applicable when stuffed)
   products: Array<{
     id: string;
     productName: string;
@@ -82,6 +85,21 @@ const bundleSchema = new Schema<BundleDocument>({
     type: String,
     enum: ['pending', 'in_progress', 'completed'],
     default: 'pending'
+  },
+  priority: {
+    type: String,
+    enum: ['high', 'medium', 'low'],
+    default: 'medium'
+  },
+  readyToShipStatus: {
+    type: String,
+    enum: ['pending', 'stuffed', 'dispatched'],
+    default: 'pending'
+  },
+  container: {
+    type: Schema.Types.ObjectId,
+    ref: 'Container',
+    required: false
   },
   products: [productSchema]
 }, {

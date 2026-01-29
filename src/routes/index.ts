@@ -30,6 +30,7 @@ import reminderRoutes from './reminder.routes';
 import containerRoutes from './container.routes';
 import pickupAssignRoutes from './pickup-assign.routes';
 import bundleRoutes from './bundle.routes';
+import readyToShipRoutes from './ready-to-ship.routes';
 
 const apiRouter = Router();
 
@@ -63,5 +64,6 @@ apiRouter.use('/reminders', reminderRoutes);
 apiRouter.use('/containers', containerRoutes);
 apiRouter.use('/pickup-assigns', pickupAssignRoutes);
 apiRouter.use('/bundles', bundleRoutes);
+apiRouter.use('/ready-to-ship', readyToShipRoutes);
 
 export default apiRouter;
