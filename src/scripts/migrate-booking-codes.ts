@@ -66,7 +66,7 @@ async function migrateBookingCodes() {
         }
 
         // Generate booking code
-        const bookingCode = await generateBookingCode(sender.name, receiver.name, new Date((booking as any).stuffingDate));
+        const bookingCode = await generateBookingCode(sender.name, receiver.name, new Date(booking.date));
 
         // Update the booking with the generated code
         await Booking.findByIdAndUpdate(booking._id, { bookingCode });

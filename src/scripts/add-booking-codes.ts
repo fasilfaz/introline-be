@@ -62,7 +62,7 @@ const addBookingCodes = async () => {
 
       if (sender && receiver) {
         // Generate booking code
-        const bookingCode = await generateBookingCode(sender.name, receiver.name, (booking as any).stuffingDate);
+        const bookingCode = await generateBookingCode(sender.name, receiver.name, booking.date);
 
         // Update the booking with the generated code
         await Booking.updateOne(

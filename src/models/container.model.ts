@@ -4,6 +4,10 @@ export interface ContainerDocument extends Document<Types.ObjectId> {
   containerCode: string; // Auto-generated container code
   companyName: string; // Company name
   bookingDate: Date; // Booking date
+  cutOffDate?: Date;
+  etaCok?: Date;
+  etdCok?: Date;
+  etaJea?: Date;
   bookingCharge: number; // Booking charge amount
   advancePayment: number; // Advance payment amount
   balanceAmount: number; // Balance amount (calculated: bookingCharge - advancePayment)
@@ -14,42 +18,54 @@ export interface ContainerDocument extends Document<Types.ObjectId> {
 
 const containerSchema = new Schema<ContainerDocument>(
   {
-    containerCode: { 
-      type: String, 
+    containerCode: {
+      type: String,
       required: true,
       unique: true,
       trim: true,
       uppercase: true
     },
-    companyName: { 
-      type: String, 
+    companyName: {
+      type: String,
       required: true,
       trim: true
     },
-    bookingDate: { 
-      type: Date, 
-      required: true 
+    bookingDate: {
+      type: Date,
+      required: true
     },
-    bookingCharge: { 
-      type: Number, 
+    cutOffDate: {
+      type: Date
+    },
+    etaCok: {
+      type: Date
+    },
+    etdCok: {
+      type: Date
+    },
+    etaJea: {
+      type: Date
+    },
+    bookingCharge: {
+      type: Number,
       required: true,
       min: 0
     },
-    advancePayment: { 
-      type: Number, 
+    advancePayment: {
+      type: Number,
       required: true,
       min: 0,
       default: 0
     },
-    balanceAmount: { 
-      type: Number, 
+    balanceAmount: {
+      type: Number,
       required: true,
       min: 0
     },
-    status: { 
-      type: String, 
-      enum: ['pending', 'confirmed', 'completed', 'cancelled'], 
-      default: 'pending' 
+    status: {
+      type: String,
+      enum: ['pending', 'confirmed', 'completed', 'cancelled'],
+      default: 'pending'
     }
   },
   {
@@ -58,13 +74,13 @@ const containerSchema = new Schema<ContainerDocument>(
 );
 
 // Pre-save middleware to calculate balance amount
-containerSchema.pre('save', function(next) {
+containerSchema.pre('save', function (next) {
   this.balanceAmount = this.bookingCharge - this.advancePayment;
   next();
 });
 
 // Pre-update middleware to calculate balance amount
-containerSchema.pre('findOneAndUpdate', function(next) {
+containerSchema.pre('findOneAndUpdate', function (next) {
   const update = this.getUpdate() as any;
   if (update.bookingCharge !== undefined || update.advancePayment !== undefined) {
     const bookingCharge = update.bookingCharge || 0;

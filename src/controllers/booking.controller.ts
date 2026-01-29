@@ -12,13 +12,13 @@ import { getPaginationParams } from '../utils/pagination';
 import { buildPaginationMeta } from '../utils/query-builder';
 
 // Helper function to generate a unique booking code from sender name, receiver name and date
-const generateBookingCode = async (senderName: string, receiverName: string, stuffingDate: Date): Promise<string> => {
+const generateBookingCode = async (senderName: string, receiverName: string, date: Date): Promise<string> => {
   // Clean the names by removing spaces and special characters, taking first 3 letters of each
   const cleanSender = senderName.replace(/[^a-zA-Z0-9]/g, '').substring(0, 3).toUpperCase();
   const cleanReceiver = receiverName.replace(/[^a-zA-Z0-9]/g, '').substring(0, 3).toUpperCase();
 
   // Format the date as YYYYMMDD
-  const formattedDate = new Date(stuffingDate).toISOString().split('T')[0].replace(/-/g, '');
+  const formattedDate = new Date(date).toISOString().split('T')[0].replace(/-/g, '');
 
   // Try to create a booking code and ensure it's unique
   let sequence = 1;
@@ -165,11 +165,7 @@ export const createBooking = asyncHandler(async (req: Request, res: Response) =>
     receiver,
     receiverBranch,
     pickupPartner,
-    stuffingDate,
-    cutOffDate,
-    etaCok,
-    etdCok,
-    etaJea,
+    date,
     expectedReceivingDate,
     bundleCount,
     status,
@@ -178,7 +174,7 @@ export const createBooking = asyncHandler(async (req: Request, res: Response) =>
   } = req.body;
 
   // Validate required fields
-  if (!sender || !receiver || !pickupPartner || !stuffingDate || !expectedReceivingDate || !bundleCount) {
+  if (!sender || !receiver || !pickupPartner || !date || !expectedReceivingDate || !bundleCount) {
     throw ApiError.badRequest('All required fields must be provided');
   }
 
@@ -220,11 +216,11 @@ export const createBooking = asyncHandler(async (req: Request, res: Response) =>
   }
 
   // Validate dates
-  const bookingDate = new Date(stuffingDate);
+  const bookingDate = new Date(date);
   const expectedDate = new Date(expectedReceivingDate);
 
   if (expectedDate <= bookingDate) {
-    throw ApiError.badRequest('Expected receiving date must be after stuffing date');
+    throw ApiError.badRequest('Expected receiving date must be after booking date');
   }
 
   // Validate bundle count
@@ -246,11 +242,7 @@ export const createBooking = asyncHandler(async (req: Request, res: Response) =>
     receiver,
     receiverBranch: receiverBranch || undefined,
     pickupPartner,
-    stuffingDate: bookingDate,
-    cutOffDate: cutOffDate ? new Date(cutOffDate) : undefined,
-    etaCok: etaCok ? new Date(etaCok) : undefined,
-    etdCok: etdCok ? new Date(etdCok) : undefined,
-    etaJea: etaJea ? new Date(etaJea) : undefined,
+    date: bookingDate,
     expectedReceivingDate: expectedDate,
     bundleCount: Number(bundleCount),
     status: status || 'pending',
@@ -314,11 +306,7 @@ export const updateBooking = asyncHandler(async (req: Request, res: Response) =>
     receiver,
     receiverBranch,
     pickupPartner,
-    stuffingDate,
-    cutOffDate,
-    etaCok,
-    etdCok,
-    etaJea,
+    date,
     expectedReceivingDate,
     bundleCount,
     status,
@@ -374,11 +362,7 @@ export const updateBooking = asyncHandler(async (req: Request, res: Response) =>
 
   // Update other fields
   if (receiverBranch !== undefined) updates.receiverBranch = receiverBranch;
-  if (stuffingDate !== undefined) updates.stuffingDate = new Date(stuffingDate);
-  if (cutOffDate !== undefined) updates.cutOffDate = cutOffDate ? new Date(cutOffDate) : undefined;
-  if (etaCok !== undefined) updates.etaCok = etaCok ? new Date(etaCok) : undefined;
-  if (etdCok !== undefined) updates.etdCok = etdCok ? new Date(etdCok) : undefined;
-  if (etaJea !== undefined) updates.etaJea = etaJea ? new Date(etaJea) : undefined;
+  if (date !== undefined) updates.date = new Date(date);
   if (expectedReceivingDate !== undefined) updates.expectedReceivingDate = new Date(expectedReceivingDate);
   if (bundleCount !== undefined) updates.bundleCount = Number(bundleCount);
   if (status !== undefined) updates.status = status;
@@ -392,9 +376,9 @@ export const updateBooking = asyncHandler(async (req: Request, res: Response) =>
   if (store !== undefined) updates.store = store;
 
   // Validate dates if both are being updated
-  if (updates.stuffingDate && updates.expectedReceivingDate) {
-    if ((updates.expectedReceivingDate as Date) <= (updates.stuffingDate as Date)) {
-      throw ApiError.badRequest('Expected receiving date must be after stuffing date');
+  if (updates.date && updates.expectedReceivingDate) {
+    if ((updates.expectedReceivingDate as Date) <= (updates.date as Date)) {
+      throw ApiError.badRequest('Expected receiving date must be after booking date');
     }
   }
 

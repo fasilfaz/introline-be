@@ -6,11 +6,7 @@ export interface BookingDocument extends Document<Types.ObjectId> {
   receiver: Types.ObjectId; // Reference to Customer with type 'Receiver'
   receiverBranch?: string; // Selected branch name from receiver's branches
   pickupPartner: Types.ObjectId | 'Self' | 'Central'; // Reference to PickupPartner or special values
-  stuffingDate: Date; // Booking date
-  cutOffDate?: Date;
-  etaCok?: Date;
-  etdCok?: Date;
-  etaJea?: Date;
+  date: Date; // Booking date
   expectedReceivingDate: Date; // Expected receiving date
   bundleCount: number; // Number of bundles
   status: 'pending' | 'success';
@@ -57,21 +53,9 @@ const bookingSchema = new Schema<BookingDocument>(
         message: 'Pickup partner must be a valid ObjectId or "Self" or "Central"'
       }
     },
-    stuffingDate: {
+    date: {
       type: Date,
       required: true
-    },
-    cutOffDate: {
-      type: Date
-    },
-    etaCok: {
-      type: Date
-    },
-    etdCok: {
-      type: Date
-    },
-    etaJea: {
-      type: Date
     },
     expectedReceivingDate: {
       type: Date,
@@ -87,8 +71,8 @@ const bookingSchema = new Schema<BookingDocument>(
       enum: ['pending', 'success'],
       default: 'pending'
     },
-     repacking: { 
-      type: String, 
+    repacking: {
+      type: String,
       enum: ['ready-to-ship', 'repacking-required'],
       default: 'ready-to-ship'
     },
@@ -109,7 +93,7 @@ bookingSchema.index({ sender: 1 });
 bookingSchema.index({ receiver: 1 });
 bookingSchema.index({ pickupPartner: 1 });
 bookingSchema.index({ status: 1 });
-bookingSchema.index({ stuffingDate: -1 });
+bookingSchema.index({ date: -1 });
 bookingSchema.index({ createdAt: -1 });
 
 export const Booking = model<BookingDocument>('Booking', bookingSchema);

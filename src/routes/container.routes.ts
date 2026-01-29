@@ -18,6 +18,10 @@ router.post(
   [
     body('companyName').notEmpty().trim().withMessage('Company name is required'),
     body('bookingDate').isISO8601().withMessage('Valid booking date is required'),
+    body('cutOffDate').optional().isISO8601().withMessage('Valid cut off date is required'),
+    body('etaCok').optional().isISO8601().withMessage('Valid ETA COK date is required'),
+    body('etdCok').optional().isISO8601().withMessage('Valid ETD COK date is required'),
+    body('etaJea').optional().isISO8601().withMessage('Valid ETA JEA date is required'),
     body('bookingCharge').isFloat({ min: 0 }).withMessage('Booking charge must be a positive number'),
     body('advancePayment').optional().isFloat({ min: 0 }).withMessage('Advance payment must be a positive number'),
     body('status').optional().isIn(['pending', 'confirmed', 'completed', 'cancelled']).withMessage('Invalid status')
@@ -31,7 +35,12 @@ router.put(
   [
     param('id').isMongoId(),
     body('companyName').optional().notEmpty().trim().withMessage('Company name cannot be empty'),
+    body('companyName').optional().notEmpty().trim().withMessage('Company name cannot be empty'),
     body('bookingDate').optional().isISO8601().withMessage('Valid booking date is required'),
+    body('cutOffDate').optional().isISO8601().withMessage('Valid cut off date is required'),
+    body('etaCok').optional().isISO8601().withMessage('Valid ETA COK date is required'),
+    body('etdCok').optional().isISO8601().withMessage('Valid ETD COK date is required'),
+    body('etaJea').optional().isISO8601().withMessage('Valid ETA JEA date is required'),
     body('bookingCharge').optional().isFloat({ min: 0 }).withMessage('Booking charge must be a positive number'),
     body('advancePayment').optional().isFloat({ min: 0 }).withMessage('Advance payment must be a positive number'),
     body('status').optional().isIn(['pending', 'confirmed', 'completed', 'cancelled']).withMessage('Invalid status')
