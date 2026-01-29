@@ -9,6 +9,7 @@ import { asyncHandler } from '../utils/async-handler';
 import { respond } from '../utils/api-response';
 import { getPaginationParams } from '../utils/pagination';
 import { buildPaginationMeta } from '../utils/query-builder';
+import { Bundle } from '../models/bundle.model';
 
 export const listPackingLists = asyncHandler(async (req: Request, res: Response) => {
   const { packingStatus, search } = req.query;
@@ -59,7 +60,9 @@ export const createPackingList = asyncHandler(async (req: Request, res: Response
     packedBy, 
     plannedBundleCount, 
     actualBundleCount, 
-    packingStatus 
+    packingStatus,
+    mainStatus,
+    bundles 
   } = req.body;
 
   // Validate booking reference exists
@@ -83,7 +86,8 @@ export const createPackingList = asyncHandler(async (req: Request, res: Response
     packedBy,
     plannedBundleCount,
     actualBundleCount: actualBundleCount || 0,
-    packingStatus: packingStatus || 'pending'
+    packingStatus: packingStatus || 'pending',
+    bundles: bundles || []
   });
 
   const packingList = await PackingList.create({
@@ -93,14 +97,36 @@ export const createPackingList = asyncHandler(async (req: Request, res: Response
     packedBy,
     plannedBundleCount,
     actualBundleCount: actualBundleCount || 0,
-    packingStatus: packingStatus || 'pending'
+    packingStatus: packingStatus || 'pending',
+    bundles: [] // Initialize with empty array, bundles will be created separately
   });
 
   console.log('Created packing list:', packingList); // Debug log
 
-  // Populate the response
+  // Create bundles if provided
+  if (bundles && Array.isArray(bundles) && bundles.length > 0) {
+    const bundleDocs = await Promise.all(
+      bundles.map(bundle => 
+        Bundle.create({
+          packingList: packingList._id,
+          bundleNumber: bundle.bundleNumber?.toString() || '', // Ensure bundleNumber is a string
+          description: bundle.description,
+          quantity: bundle.quantity,
+          netWeight: bundle.netWeight,
+          grossWeight: bundle.grossWeight,
+          actualCount: bundle.actualCount,
+          status: bundle.status || 'pending',
+          products: bundle.products || []
+        })
+      )
+    );
+    packingList.bundles = bundleDocs.map(bundle => bundle._id);
+    await packingList.save();
+  }
+
+  // Populate the response with booking and bundles
   const populatedPackingList = await PackingList.findById(packingList._id)
-    .populate('bookingReference', 'sender receiver pickupPartner date bundleCount status')
+    .populate('bookingReference', 'sender receiver pickupPartner date bundleCount status repacking')
     .populate({
       path: 'bookingReference',
       populate: [
@@ -108,7 +134,8 @@ export const createPackingList = asyncHandler(async (req: Request, res: Response
         { path: 'receiver', select: 'name email' },
         { path: 'pickupPartner', select: 'name' }
       ]
-    });
+    })
+    .populate('bundles'); // Populate the bundles to return full bundle data in response
 
   return respond(res, StatusCodes.CREATED, populatedPackingList, { message: 'Packing list created successfully' });
 });
@@ -123,13 +150,15 @@ export const getPackingList = asyncHandler(async (req: Request, res: Response) =
         { path: 'receiver', select: 'name email' },
         { path: 'pickupPartner', select: 'name' }
       ]
-    });
+    })
+    .populate('bundles') // Populate the bundles to return full bundle data
+  const populatedPackingList = await packingList;
 
-  if (!packingList) {
+  if (!populatedPackingList) {
     throw ApiError.notFound('Packing list not found');
   }
 
-  return respond(res, StatusCodes.OK, packingList);
+  return respond(res, StatusCodes.OK, populatedPackingList);
 });
 
 export const updatePackingList = asyncHandler(async (req: Request, res: Response) => {
@@ -146,7 +175,9 @@ export const updatePackingList = asyncHandler(async (req: Request, res: Response
     packedBy, 
     plannedBundleCount, 
     actualBundleCount, 
-    packingStatus 
+    packingStatus,
+    mainStatus,
+    bundles
   } = req.body;
 
   // If booking reference is being changed, validate it
@@ -175,12 +206,43 @@ export const updatePackingList = asyncHandler(async (req: Request, res: Response
   if (plannedBundleCount !== undefined) packingList.plannedBundleCount = plannedBundleCount;
   if (actualBundleCount !== undefined) packingList.actualBundleCount = actualBundleCount;
   if (packingStatus !== undefined) packingList.packingStatus = packingStatus;
+  if (bundles !== undefined) {
+    // Handle bundle updates
+    if (Array.isArray(bundles)) {
+      // Delete existing bundles for this packing list
+      await Bundle.deleteMany({ packingList: packingList._id });
+      
+      // Create new bundles
+      if (bundles.length > 0) {
+        const bundleDocs = await Promise.all(
+          bundles.map(bundle => 
+            Bundle.create({
+              packingList: packingList._id,
+              bundleNumber: bundle.bundleNumber?.toString() || '', // Ensure bundleNumber is a string
+              description: bundle.description,
+              quantity: bundle.quantity,
+              netWeight: bundle.netWeight,
+              grossWeight: bundle.grossWeight,
+              actualCount: bundle.actualCount,
+              status: bundle.status || 'pending',
+              products: bundle.products || []
+            })
+          )
+        );
+        packingList.bundles = bundleDocs.map(bundle => bundle._id);
+      } else {
+        packingList.bundles = [];
+      }
+    } else {
+      packingList.bundles = [];
+    }
+  }
 
   await packingList.save();
 
-  // Populate the response
+  // Populate the response with booking and bundles
   const updatedPackingList = await PackingList.findById(packingList._id)
-    .populate('bookingReference', 'sender receiver pickupPartner date bundleCount status')
+    .populate('bookingReference', 'sender receiver pickupPartner date bundleCount status repacking')
     .populate({
       path: 'bookingReference',
       populate: [
@@ -188,7 +250,8 @@ export const updatePackingList = asyncHandler(async (req: Request, res: Response
         { path: 'receiver', select: 'name email' },
         { path: 'pickupPartner', select: 'name' }
       ]
-    });
+    })
+    .populate('bundles'); // Populate the bundles to return full bundle data in response
 
   return respond(res, StatusCodes.OK, updatedPackingList, { message: 'Packing list updated successfully' });
 });
@@ -204,6 +267,9 @@ export const deletePackingList = asyncHandler(async (req: Request, res: Response
   if (packingList.packingStatus === 'completed') {
     throw ApiError.badRequest('Cannot delete completed packing lists');
   }
+
+  // Delete associated bundles
+  await Bundle.deleteMany({ packingList: packingList._id });
 
   await packingList.deleteOne();
 

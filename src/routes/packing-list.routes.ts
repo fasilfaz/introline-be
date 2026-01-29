@@ -20,7 +20,14 @@ router.post(
     body('packedBy').notEmpty().trim().withMessage('Packed by is required'),
     body('plannedBundleCount').isInt({ min: 0 }).withMessage('Planned bundle count must be a positive integer'),
     body('actualBundleCount').optional().isInt({ min: 0 }).withMessage('Actual bundle count must be a positive integer'),
-    body('packingStatus').optional().isIn(['pending', 'in_progress', 'completed']).withMessage('Invalid packing status')
+    body('packingStatus').optional().isIn(['pending', 'in_progress', 'completed']).withMessage('Invalid packing status'),
+    body('bundles').optional().isArray().withMessage('Bundles must be an array'),
+    body('bundles.*.description').optional().trim().isLength({ max: 500 }).withMessage('Description must be less than 500 characters'),
+    body('bundles.*.quantity').optional().isFloat({ min: 0 }).withMessage('Quantity must be a positive number'),
+    body('bundles.*.netWeight').optional().isFloat({ min: 0 }).withMessage('Net weight must be a positive number'),
+    body('bundles.*.grossWeight').optional().isFloat({ min: 0 }).withMessage('Gross weight must be a positive number'),
+    body('bundles.*.actualCount').optional().isFloat({ min: 0 }).withMessage('Actual count must be a positive number'),
+    body('bundles.*.status').optional().isIn(['pending', 'in_progress', 'completed']).withMessage('Invalid bundle status')
   ],
   validateRequest,
   createPackingList
@@ -38,7 +45,14 @@ router.put(
     body('packedBy').optional().notEmpty().trim().withMessage('Packed by is required'),
     body('plannedBundleCount').optional().isInt({ min: 0 }).withMessage('Planned bundle count must be a positive integer'),
     body('actualBundleCount').optional().isInt({ min: 0 }).withMessage('Actual bundle count must be a positive integer'),
-    body('packingStatus').optional().isIn(['pending', 'in_progress', 'completed']).withMessage('Invalid packing status')
+    body('packingStatus').optional().isIn(['pending', 'in_progress', 'completed']).withMessage('Invalid packing status'),
+    body('bundles').optional().isArray().withMessage('Bundles must be an array'),
+    body('bundles.*.description').optional().trim().isLength({ max: 500 }).withMessage('Description must be less than 500 characters'),
+    body('bundles.*.quantity').optional().isFloat({ min: 0 }).withMessage('Quantity must be a positive number'),
+    body('bundles.*.netWeight').optional().isFloat({ min: 0 }).withMessage('Net weight must be a positive number'),
+    body('bundles.*.grossWeight').optional().isFloat({ min: 0 }).withMessage('Gross weight must be a positive number'),
+    body('bundles.*.actualCount').optional().isFloat({ min: 0 }).withMessage('Actual count must be a positive number'),
+    body('bundles.*.status').optional().isIn(['pending', 'in_progress', 'completed']).withMessage('Invalid bundle status')
   ],
   validateRequest,
   updatePackingList

@@ -12,6 +12,8 @@ export interface PackingListDocument extends Document<Types.ObjectId> {
   company?: Types.ObjectId; // For legacy index compatibility
   boxNumber?: string; // For legacy index compatibility
   count?: number; // New sequential count
+  bundles: Types.ObjectId[]; // Array of bundle references
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -79,6 +81,14 @@ const packingListSchema = new Schema<PackingListDocument>(
     timestamps: true
   }
 );
+
+// Add the bundles field to the packingListSchema
+packingListSchema.add({
+  bundles: [{
+    type: Schema.Types.ObjectId,
+    ref: 'Bundle'
+  }]
+});
 
 // Create indexes for better performance
 packingListSchema.index({ packingListCode: 1 }, { unique: true });
