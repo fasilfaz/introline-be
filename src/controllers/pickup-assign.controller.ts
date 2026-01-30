@@ -37,7 +37,7 @@ export const createPickupAssign = async (req: Request, res: Response) => {
     });
 
     await pickupAssign.save();
-    
+
     // Populate transport partner details
     await pickupAssign.populate('transportPartner');
 
@@ -100,7 +100,7 @@ export const getPickupAssigns = async (req: Request, res: Response) => {
     // Add search functionality if provided
     if (search) {
       const searchRegex = new RegExp(search as string, 'i');
-      
+
       // First get transport partners that match the search
       const matchingPartners = await PickupPartner.find({
         $or: [
@@ -218,7 +218,7 @@ export const updatePickupAssign = async (req: Request, res: Response) => {
     }
 
     const updateData: any = {};
-    
+
     if (transportPartnerId) updateData.transportPartnerId = transportPartnerId;
     if (lrNumbers) {
       updateData.lrNumbers = lrNumbers.map((lr: any) => ({
@@ -240,6 +240,13 @@ export const updatePickupAssign = async (req: Request, res: Response) => {
         success: false,
         message: 'Pickup assignment not found'
       });
+    }
+
+    // Auto-complete status if all LR numbers are collected
+    const allCollected = pickupAssign.lrNumbers.every(lr => lr.status === 'Collected');
+    if (allCollected && pickupAssign.status !== 'Completed') {
+      pickupAssign.status = 'Completed';
+      await pickupAssign.save();
     }
 
     res.status(200).json({
@@ -328,6 +335,13 @@ export const updateLRStatus = async (req: Request, res: Response) => {
         success: false,
         message: 'Pickup assignment or LR number not found'
       });
+    }
+
+    // Auto-complete status if all LR numbers are collected
+    const allCollected = pickupAssign.lrNumbers.every(lr => lr.status === 'Collected');
+    if (allCollected && pickupAssign.status !== 'Completed') {
+      pickupAssign.status = 'Completed';
+      await pickupAssign.save();
     }
 
     res.status(200).json({
