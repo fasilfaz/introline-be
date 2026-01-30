@@ -12,6 +12,7 @@ export interface BundleDocument extends Document<Types.ObjectId> {
   priority: 'high' | 'medium' | 'low'; // Priority status
   readyToShipStatus: 'pending' | 'stuffed' | 'dispatched'; // Ready to ship status
   container?: Types.ObjectId; // Reference to Container (only applicable when stuffed)
+  bundleType: 'box' | 'bale'; // Bundle type
   products: Array<{
     id: string;
     productName: string;
@@ -100,6 +101,11 @@ const bundleSchema = new Schema<BundleDocument>({
     type: Schema.Types.ObjectId,
     ref: 'Container',
     required: false
+  },
+  bundleType: {
+    type: String,
+    enum: ['box', 'bale'],
+    default: 'box'
   },
   products: [productSchema]
 }, {

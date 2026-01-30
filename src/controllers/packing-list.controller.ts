@@ -116,6 +116,7 @@ export const createPackingList = asyncHandler(async (req: Request, res: Response
           grossWeight: bundle.grossWeight,
           actualCount: bundle.actualCount,
           status: bundle.status || 'pending',
+          bundleType: bundle.bundleType || 'box', // Default to 'box' if not provided
           products: bundle.products || []
         })
       )
@@ -225,6 +226,7 @@ export const updatePackingList = asyncHandler(async (req: Request, res: Response
               grossWeight: bundle.grossWeight,
               actualCount: bundle.actualCount,
               status: bundle.status || 'pending',
+              bundleType: bundle.bundleType || 'box', // Default to 'box' if not provided
               products: bundle.products || []
             })
           )
