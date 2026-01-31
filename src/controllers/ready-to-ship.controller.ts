@@ -39,8 +39,17 @@ export const listReadyToShipBundles = asyncHandler(async (req: Request, res: Res
     ];
   }
 
-  // Build the query without populating packing list data, but populate container if needed
-  const query = Bundle.find(filters).populate('container', 'containerCode');
+  // Build the query to populate container, packing list, and booking data
+  const query = Bundle.find(filters)
+    .populate({
+      path: 'packingList',
+      select: 'packingListCode bookingReference netWeight grossWeight packedBy plannedBundleCount actualBundleCount packingStatus createdAt updatedAt',
+      populate: {
+        path: 'bookingReference',
+        select: 'bookingCode sender receiver pickupPartner date expectedReceivingDate bundleCount status repacking store createdAt updatedAt'
+      }
+    })
+    .populate('container', 'containerCode');
 
   // Add sorting
   const sortObj: Record<string, 1 | -1> = {};
@@ -65,7 +74,16 @@ export const listReadyToShipBundles = asyncHandler(async (req: Request, res: Res
 export const getReadyToShipBundle = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
 
-  const bundle = await Bundle.findById(id).populate('container', 'containerCode');
+  const bundle = await Bundle.findById(id)
+    .populate({
+      path: 'packingList',
+      select: 'packingListCode bookingReference netWeight grossWeight packedBy plannedBundleCount actualBundleCount packingStatus createdAt updatedAt',
+      populate: {
+        path: 'bookingReference',
+        select: 'bookingCode sender receiver pickupPartner date expectedReceivingDate bundleCount status repacking store createdAt updatedAt'
+      }
+    })
+    .populate('container', 'containerCode');
 
   if (!bundle) {
     throw ApiError.notFound('Bundle not found');
@@ -119,21 +137,30 @@ export const updateReadyToShipBundle = asyncHandler(async (req: Request, res: Re
   if (priority !== undefined) bundle.priority = priority;
   if (readyToShipStatus !== undefined) bundle.readyToShipStatus = readyToShipStatus;
   
-  // Handle container assignment - only if readyToShipStatus is 'stuffed'
-  if (readyToShipStatus === 'stuffed' && container !== undefined && container !== '') {
+  // Handle container assignment - only if readyToShipStatus is 'stuffed' or 'dispatched'
+  if ((readyToShipStatus === 'stuffed' || readyToShipStatus === 'dispatched') && container !== undefined && container !== '') {
     if (!Types.ObjectId.isValid(container)) {
       throw ApiError.badRequest('Invalid container ID');
     }
     bundle.container = new Types.ObjectId(container);
-  } else if (readyToShipStatus !== 'stuffed') {
-    // Clear container if status is not stuffed
+  } else if (readyToShipStatus !== 'stuffed' && readyToShipStatus !== 'dispatched') {
+    // Clear container if status is neither stuffed nor dispatched
     bundle.container = undefined;
   }
 
   await bundle.save();
 
   // Populate the updated bundle before returning
-  const updatedBundle = await Bundle.findById(bundle._id).populate('container', 'containerCode');
+  const updatedBundle = await Bundle.findById(bundle._id)
+    .populate({
+      path: 'packingList',
+      select: 'packingListCode bookingReference netWeight grossWeight packedBy plannedBundleCount actualBundleCount packingStatus createdAt updatedAt',
+      populate: {
+        path: 'bookingReference',
+        select: 'bookingCode sender receiver pickupPartner date expectedReceivingDate bundleCount status repacking store createdAt updatedAt'
+      }
+    })
+    .populate('container', 'containerCode');
 
   return respond(res, StatusCodes.OK, updatedBundle, { message: 'Bundle updated successfully' });
 });

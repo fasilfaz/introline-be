@@ -43,7 +43,6 @@ const packingListSchema = new Schema<PackingListDocument>(
     },
     packedBy: {
       type: String,
-      required: true,
       trim: true
     },
     plannedBundleCount: {
